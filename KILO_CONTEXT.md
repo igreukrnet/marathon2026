@@ -223,6 +223,7 @@ Triggers: PR/push to `main` on `infra/terraform/**`. `terraform plan` → PR com
 7. Never use text-replace for type renames — use IDE symbol rename
 
 **Working agreements:**
+- Mandatory approval: NEVER commit, merge, push, or create a pull request without explicit user approval. Always show the proposed changes/diff and wait for user confirmation.
 - Branch: `feature/<desc>`, `bugfix/<desc>`, `fix/<desc>`. Never commit to `main` directly.
 - Commit: `<semver> short description`, ≤120 chars. Bump version on user-visible changes.
 - One logical change per PR. No mixing lint sweeps with behaviour changes.
