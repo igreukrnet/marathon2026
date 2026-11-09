@@ -141,12 +141,12 @@
       </div>
     </main>
 
-    @if (!feedbackForUpdate?.service || !feedbackForUpdate?.cuisineExperience) {
+    @if (!feedbackForUpdate()?.service || !feedbackForUpdate()?.cuisineExperience) {
       <app-custom-button (click)="onSubmitFeedback()" class="edit-confirmed-btn">
         Submit Feedback
       </app-custom-button>
     }
-    @if (feedbackForUpdate?.service && feedbackForUpdate?.cuisineExperience) {
+    @if (feedbackForUpdate()?.service && feedbackForUpdate()?.cuisineExperience) {
       <app-custom-button (click)="onUpdateFeedback()" class="edit-confirmed-btn">
         Update Feedback
       </app-custom-button>

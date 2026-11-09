@@ -5,7 +5,7 @@ import {
   EventEmitter,
   HostBinding,
   inject,
-  Input,
+  input,
   OnInit,
   Output,
   ChangeDetectionStrategy,
@@ -34,10 +34,10 @@ import { FeedbackUpdatedEvent } from '@app/models/feedbacks/feedback.model';
     standalone: true
 })
 export class FeedbackWindowComponent implements OnInit, AfterViewInit {
-  @Input() customClass = '';
-  @Input() selectedReservation!: Reservation;
-  @Input() feedbackForUpdate: FeedbackReservationResponseItem | undefined;
-  @Input() anonymousToken = '';
+  readonly customClass = input<string>('');
+  readonly selectedReservation = input.required<Reservation>();
+  readonly feedbackForUpdate = input<FeedbackReservationResponseItem | undefined>(undefined);
+  readonly anonymousToken = input<string>('');
   @Output() closedFeedback = new EventEmitter<void>();
 
   @Output() feedbackUpdated = new EventEmitter<FeedbackUpdatedEvent>();
@@ -73,44 +73,32 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
   // ) {}
 
   ngOnInit(): void {
-    // console.log('reservation:') ;
-    // console.log(this.selectedReservation);
-    console.log(this.feedbackForUpdate);
-
+    const feedbackForUpdate = this.feedbackForUpdate();
+    const selectedReservation = this.selectedReservation();
     const isAnon =
-      this.selectedReservation?.customerId === null || this.selectedReservation?.customerId === '';
+      selectedReservation?.customerId === null || selectedReservation?.customerId === '';
     this.isAnonymous = isAnon;
 
-    if (this.feedbackForUpdate) {
-      if (this.feedbackForUpdate.service) {
-        this.serviceRating = this.feedbackForUpdate.service.rating;
-        this.serviceComment = this.feedbackForUpdate.service.comment;
+    if (feedbackForUpdate) {
+      if (feedbackForUpdate.service) {
+        this.serviceRating = feedbackForUpdate.service.rating;
+        this.serviceComment = feedbackForUpdate.service.comment;
 
         if (isAnon) {
           this.showServiceForm = false;
-          console.log('Service feedback already exists for anonymous → hiding service form');
-        } else {
-          console.log(
-            'Service feedback exists for logged-in user → keeping form visible for updates'
-          );
         }
       }
 
-      if (this.feedbackForUpdate.cuisineExperience) {
-        this.cuisineRating = this.feedbackForUpdate.cuisineExperience.rating;
-        this.cuisineComment = this.feedbackForUpdate.cuisineExperience.comment;
+      if (feedbackForUpdate.cuisineExperience) {
+        this.cuisineRating = feedbackForUpdate.cuisineExperience.rating;
+        this.cuisineComment = feedbackForUpdate.cuisineExperience.comment;
 
         if (isAnon) {
           this.showCuisineForm = false;
-          console.log('Cuisine feedback already exists for anonymous → hiding cuisine form');
-        } else {
-          console.log(
-            'Cuisine feedback exists for logged-in user → keeping form visible for updates'
-          );
         }
       }
 
-      if (isAnon && this.feedbackForUpdate.service && this.feedbackForUpdate.cuisineExperience) {
+      if (isAnon && feedbackForUpdate.service && feedbackForUpdate.cuisineExperience) {
         this.showServiceForm = false;
         this.showCuisineForm = false;
         this.closedFeedback.emit();
@@ -126,8 +114,8 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
       }
     }
 
-    if (this.selectedReservation && this.selectedReservation.waiterId) {
-      this.authService.getUserNameById$(this.selectedReservation.waiterId).subscribe({
+    if (selectedReservation && selectedReservation.waiterId) {
+      this.authService.getUserNameById$(selectedReservation.waiterId).subscribe({
         next: (name) => {
           this.waiterName = name;
         },
@@ -136,9 +124,9 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
           this.toastr.error('Failed to load waiter information.');
         },
       });
-      this.userService.getUserProfileImage(this.selectedReservation.waiterId).subscribe({
+      this.userService.getUserProfileImage(selectedReservation.waiterId).subscribe({
         next: (response) => {
-          this.waiterProfileImage = response.presignedUrl ?? '/assets/img/avatar.png'; // Fallback to default image if not available
+          this.waiterProfileImage = response.presignedUrl ?? '/assets/img/avatar.png';
         },
         error: (err) => {
           console.error('Error fetching waiter profile image:', err);
@@ -166,13 +154,15 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
 
   onSubmitFeedback(): void {
     const requests: CreateFeedbackRequest[] = [];
-    const serviceAlreadyExists = this.feedbackForUpdate?.service != null;
-    const cuisineAlreadyExists = this.feedbackForUpdate?.cuisineExperience != null;
+    const feedbackForUpdate = this.feedbackForUpdate();
+    const selectedReservation = this.selectedReservation();
+    const serviceAlreadyExists = feedbackForUpdate?.service != null;
+    const cuisineAlreadyExists = feedbackForUpdate?.cuisineExperience != null;
 
     if (this.serviceRating > 0 && !serviceAlreadyExists) {
       requests.push({
-        reservationId: this.selectedReservation.id,
-        userId: this.selectedReservation.customerId,
+        reservationId: selectedReservation.id,
+        userId: selectedReservation.customerId,
         rating: this.serviceRating,
         comment: this.serviceComment?.trim() || undefined,
         type: ReviewType.Service,
@@ -181,8 +171,8 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
 
     if (this.cuisineRating > 0 && !cuisineAlreadyExists) {
       requests.push({
-        reservationId: this.selectedReservation.id,
-        userId: this.selectedReservation.customerId,
+        reservationId: selectedReservation.id,
+        userId: selectedReservation.customerId,
         rating: this.cuisineRating,
         comment: this.cuisineComment?.trim() || undefined,
         type: ReviewType.CuisineExperience,
@@ -190,18 +180,17 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
     }
 
     const requests$ = requests.map((req) =>
-      this.feedbacksService.leaveFeedback(req, this.anonymousToken)
+      this.feedbacksService.leaveFeedback(req, this.anonymousToken())
     );
 
     // Send both requests in parallel
     forkJoin(requests$).subscribe({
       next: () => {
-        if (this.selectedReservation) {
-          this.selectedReservation.status = ReservationStatus.Finished;
-          console.log(' this.selectedReservation.status ', this.selectedReservation.status);
+        if (selectedReservation) {
+          selectedReservation.status = ReservationStatus.Finished;
         }
         this.feedbackUpdated.emit({
-          reservationId: this.selectedReservation.id,
+          reservationId: selectedReservation.id,
           feedback: {
             service:
               this.serviceRating > 0
@@ -223,8 +212,10 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
 
   onUpdateFeedback(): void {
     const requests: CreateFeedbackRequest[] = [];
-    const originalService = this.feedbackForUpdate?.service;
-    const originalCuisine = this.feedbackForUpdate?.cuisineExperience;
+    const feedbackForUpdate = this.feedbackForUpdate();
+    const selectedReservation = this.selectedReservation();
+    const originalService = feedbackForUpdate?.service;
+    const originalCuisine = feedbackForUpdate?.cuisineExperience;
 
     const serviceChanged =
       this.serviceRating > 0 &&
@@ -238,8 +229,8 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
 
     if (serviceChanged) {
       requests.push({
-        reservationId: this.selectedReservation.id,
-        userId: this.selectedReservation.customerId,
+        reservationId: selectedReservation.id,
+        userId: selectedReservation.customerId,
         rating: this.serviceRating,
         comment: this.serviceComment?.trim() || undefined,
         type: ReviewType.Service,
@@ -248,8 +239,8 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
 
     if (cuisineChanged) {
       requests.push({
-        reservationId: this.selectedReservation.id,
-        userId: this.selectedReservation.customerId,
+        reservationId: selectedReservation.id,
+        userId: selectedReservation.customerId,
         rating: this.cuisineRating,
         comment: this.cuisineComment?.trim() || undefined,
         type: ReviewType.CuisineExperience,
@@ -265,7 +256,7 @@ export class FeedbackWindowComponent implements OnInit, AfterViewInit {
     forkJoin(requests$).subscribe({
       next: () => {
         this.feedbackUpdated.emit({
-          reservationId: this.selectedReservation.id,
+          reservationId: selectedReservation.id,
           feedback: {
             service:
               this.serviceRating > 0

@@ -7,21 +7,21 @@
 <div class="modal-content">
   <button class="close-button" (click)="onClose()">×</button>
 
-  <img class="dish-image" [src]="dish.imageUrl" [alt]="dish.name" />
+  <img class="dish-image" [src]="dish().imageUrl" [alt]="dish().name" />
 
-  <h3 class="dish-name">{{ dish.name }}</h3>
+  <h3 class="dish-name">{{ dish().name }}</h3>
 
   <div class="dish-info">
-    <p class="dish-description">{{ dish.description }}</p>
-    <p><strong>Calories:</strong> {{ dish.calories }} kcal</p>
-    <p><strong>Protein:</strong> {{ dish.proteins }}</p>
-    <p><strong>Fats:</strong> {{ dish.fats }}g</p>
-    <p><strong>Carbohydrates:</strong> {{ dish.carbohydrates }}</p>
-    <p><strong>Vitamins and minerals:</strong> {{ dish.vitamins }}</p>
+    <p class="dish-description">{{ dish().description }}</p>
+    <p><strong>Calories:</strong> {{ dish().calories }} kcal</p>
+    <p><strong>Protein:</strong> {{ dish().proteins }}</p>
+    <p><strong>Fats:</strong> {{ dish().fats }}g</p>
+    <p><strong>Carbohydrates:</strong> {{ dish().carbohydrates }}</p>
+    <p><strong>Vitamins and minerals:</strong> {{ dish().vitamins }}</p>
   </div>
 
   <div class="price-weight">
-    <span>{{ dish.price }}$</span>
-    <span>{{ dish.weight }}</span>
+    <span>{{ dish().price }}$</span>
+    <span>{{ dish().weight }}</span>
   </div>
 </div>

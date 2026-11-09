@@ -2,7 +2,7 @@ import {
   Component,
   EventEmitter,
   inject,
-  Input,
+  input,
   OnInit,
   Output,
   ChangeDetectionStrategy,
@@ -31,9 +31,9 @@ export class PlaceOrderWaiterComponent implements OnInit {
   private readonly dishes = inject(DishesService);
   private readonly toast = inject(ToastService);
 
-  @Input() title = 'Place new Order';
-  @Input() reservationId = 'RSV-RST14-T3-170625';
-  @Input() customerId?: string;
+  readonly title = input<string>('Place new Order');
+  readonly reservationId = input<string>('RSV-RST14-T3-170625');
+  readonly customerId = input<string | undefined>(undefined);
 
   waiterName = 'Jane Smith';
   customerName = 'John Doe';
@@ -93,7 +93,7 @@ export class PlaceOrderWaiterComponent implements OnInit {
     }
 
     this.placeOrder.emit({
-      reservationId: this.reservationId,
+      reservationId: this.reservationId(),
       orderItems: this.orderItems,
     });
     this.closeModal.emit();

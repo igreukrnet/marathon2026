@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectionStrategy, input } from '@angular/core';
 import { DishListResponse } from '@app/models/dishes/dish-list-response.model';
 import { CommonModule } from '@angular/common';
 
@@ -10,24 +10,21 @@ import { CommonModule } from '@angular/common';
   styleUrl: './dish-select-card.component.scss',
 })
 export class DishSelectCardComponent {
-  @Input() dish!: DishListResponse;
+  readonly dish = input.required<DishListResponse>();
+  readonly quantity = input<number>(1);
   @Output() quantityChanged = new EventEmitter<number>();
   @Output() remove = new EventEmitter<void>();
 
-  @Input() quantity = 1; // Replace with dish quantity when implemented
-
   onIncrement() {
-    this.quantity++;
-    this.quantityChanged.emit(this.quantity);
+    this.quantityChanged.emit(this.quantity() + 1);
   }
 
   onDecrement() {
-    this.quantity = Math.max(1, this.quantity - 1);
-    this.quantityChanged.emit(this.quantity);
+    this.quantityChanged.emit(Math.max(1, this.quantity() - 1));
   }
 
   canGoDown() {
-    return this.quantity > 1;
+    return this.quantity() > 1;
   }
 
   onRemove() {

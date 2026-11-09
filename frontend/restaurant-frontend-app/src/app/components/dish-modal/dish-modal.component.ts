@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Output, EventEmitter, ChangeDetectionStrategy, input } from '@angular/core';
 import { DishListResponse } from '@app/models/dishes/dish-list-response.model';
 
 @Component({
@@ -10,7 +10,7 @@ import { DishListResponse } from '@app/models/dishes/dish-list-response.model';
   styleUrl: './dish-modal.component.scss',
 })
 export class DishModalComponent {
-  @Input() dish!: DishListResponse;
+  readonly dish = input.required<DishListResponse>();
   @Output() closed = new EventEmitter<void>();
 
   onClose(): void {
