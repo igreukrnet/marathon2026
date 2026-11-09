@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { FormsModule } from '@angular/forms';
 import { CustomButtonComponent } from '@app/shared/custom-components/custom-button/custom-button.component';
 import { ModalComponent } from '@app/shared/custom-components/modal/modal.component';
-import { GuestInviteVm } from '../../state/guest-preorder.store';
+import { GuestInviteVm } from '@app/pages/guest-pre-order-page/state/guest-preorder.store';
 
 @Component({
     standalone: true,

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { GuestInvite } from '@app/models/reservations/guest-invite.model';
 import { CustomButtonComponent } from '@app/shared/custom-components/custom-button/custom-button.component';
-import { GuestCartItem } from '../../state/guest-preorder.store';
+import { GuestCartItem } from '@app/pages/guest-pre-order-page/state/guest-preorder.store';
 
 @Component({
     standalone: true,

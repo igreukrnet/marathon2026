@@ -26,21 +26,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   //user: UserModel | null = null;
   //MIGRATION TO SIGNALS user -> signal
-  user = signal<UserModel | null>(null);
+  readonly user = signal<UserModel | null>(null);
 
   //notifications: Notification[] = [];
   //MIGRATION TO SIGNALS notifications -> signal
-  notifications = signal<Notification[]>([]);
+  readonly notifications = signal<Notification[]>([]);
 
   //unreadCount = 0;
   //MIGRATION TO SIGNALS unreadCount -> computed (instead of manual set)
-  unreadCount = computed(() => this.notifications().filter((n) => !n.isRead).length);
+  readonly unreadCount = computed(() => this.notifications().filter((n) => !n.isRead).length);
 
   //MIGRATION: UI flags -> signals
-  showDropdown = signal(false);
-  showNotificationsDropdown = signal(false);
-  isMobileMenuOpen = signal(false);
-  showCart = signal(false);
+  readonly showDropdown = signal(false);
+  readonly showNotificationsDropdown = signal(false);
+  readonly isMobileMenuOpen = signal(false);
+  readonly showCart = signal(false);
 
   private pollingSubscription?: Subscription;
   private userSubscription?: Subscription;

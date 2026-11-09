@@ -4,7 +4,7 @@ import {
   Output,
   EventEmitter,
   OnInit,
-  ViewChild,
+  viewChild,
   OnDestroy,
   ChangeDetectionStrategy,
   inject,
@@ -28,7 +28,7 @@ export class FeedbackQrModalComponent implements OnInit, OnDestroy {
   readonly waiterName = input.required<string>();
   readonly isNewFeedback = input<boolean>(true);
 
-  @ViewChild('qrcodeCanvas', { static: true }) qrCodeElement!: ElementRef;
+  readonly qrCodeElement = viewChild.required<ElementRef>('qrcodeCanvas');
 
   @Output() closed = new EventEmitter<void>();
 
@@ -59,7 +59,7 @@ export class FeedbackQrModalComponent implements OnInit, OnDestroy {
             color: '#ffffff',
           },
         });
-        this.qrCode.append(this.qrCodeElement.nativeElement);
+        this.qrCode.append(this.qrCodeElement().nativeElement);
       },
       error: (error) => {
         console.error('Error fetching feedback token:', error);
