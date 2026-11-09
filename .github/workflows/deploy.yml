@@ -24,6 +24,8 @@ env:
   APP_DIR: backend/restaurant-backend-app
   AWS_REGION: eu-north-1
   DEPLOY_NAME: dev
+  XDG_RUNTIME_DIR: /tmp
+  DOTNET_CLI_HOME: /tmp
 
 jobs:
   deploy:
@@ -70,6 +72,7 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         run: |
           sed -i "s|project_path:.*|project_path: \"$(pwd)\"|g" .syndicate-config-restaurant-backend-app/syndicate.yml
+          mkdir -p /tmp/.dotnet/shm
 
       - name: Syndicate build
         working-directory: ${{ env.APP_DIR }}
