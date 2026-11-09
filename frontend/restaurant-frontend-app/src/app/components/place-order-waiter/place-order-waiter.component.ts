@@ -60,7 +60,7 @@ export class PlaceOrderWaiterComponent implements OnInit {
     this.dishNameForm = this.formBuilder.group({
       dishName: ['', [Validators.required, Validators.maxLength(100)]],
     });
-    this.auth.getUserNameById$(this.customerId ?? 'noid').subscribe({
+    this.auth.getUserNameById$(this.customerId() ?? 'noid').subscribe({
       next: (name) => {
         this.customerName = name;
       },
