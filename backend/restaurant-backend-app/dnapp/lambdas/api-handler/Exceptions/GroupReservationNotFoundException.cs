@@ -1,3 +1,4 @@
 ﻿namespace APIHandler.Exceptions;
 
-public class GroupReservationNotFoundException() : ValidationException("Group reservation was not found");
+public class GroupReservationNotFoundException(string? message = null) 
+    : ValidationException(message ?? "Group reservation was not found");

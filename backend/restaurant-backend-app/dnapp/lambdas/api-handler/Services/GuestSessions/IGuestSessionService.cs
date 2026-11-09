@@ -1,3 +1,4 @@
+using APIHandler.Models.GroupReservation;
 using APIHandler.Models.GuestSessions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,5 +17,7 @@ public interface IGuestSessionService
     Task<GetAllSessionsResponse> GetAllSessionsAsync(string userId, string groupReservationId);
     Task<GetAllSessionsResponse> DeleteGuestSessionAsync(string userId, string groupReservationId, string guestSessionId);
     Task<GetGuestSessionResponse> GetGuestSessionInfoAsync(string guestSessionId);
+    Task<GetOwnerSessionIdResponse> GetOwnerSessionIdAsync(string userId, string reservationId);
+    Task<List<ConsolidatedDishResponse>> SubmitGroupPreOrderAsync(string userId, string groupReservationId, string reservationId);
 }
 
