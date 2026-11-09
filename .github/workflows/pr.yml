@@ -63,7 +63,7 @@
                 - name: Production build
                   run: npm run build
                   env:
-                     BACKEND_URL: ${{ vars.BACKEND_URL || 'https://6dt85f01cf.execute-api.eu-north-1.amazonaws.com/develop' }}
+                     BACKEND_URL: ${{ vars.BACKEND_URL }}
                 
                 - name: Configure AWS credentials
                   if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
@@ -71,12 +71,12 @@
                   with:
                     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                    aws-region: ${{ vars.AWS_REGION || 'eu-north-1' }}
+                    aws-region: ${{ vars.AWS_REGION }}
 
                 - name: Deploy to S3
                   if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-                  run: aws s3 sync dist/restaurant-frontend-app/browser s3://${{ vars.S3_BUCKET || 'restaurant-frontend-586047842843' }}/ --delete
+                  run: aws s3 sync dist/restaurant-frontend-app/browser s3://${{ vars.S3_BUCKET }}/ --delete
 
                 - name: Invalidate CloudFront cache
                   if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-                  run: aws cloudfront create-invalidation --distribution-id E36HD7CJNGHPGW --paths "/*"
+                  run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
