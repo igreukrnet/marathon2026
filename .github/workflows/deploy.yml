@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'backend/**'
+      - '.github/workflows/deploy.yml'
 
   workflow_dispatch:
     inputs:
@@ -41,9 +42,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
-          role-session-name: syndicate-${{ github.run_id }}
 
       - name: Verify identity
         run: aws sts get-caller-identity
@@ -67,6 +66,11 @@ jobs:
       - name: Install AWS Syndicate
         run: pip install aws-syndicate "botocore[crt]"
 
+      - name: Set Syndicate project path for runner
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          sed -i "s|project_path:.*|project_path: \"$(pwd)\"|g" .syndicate-config-restaurant-backend-app/syndicate.yml
+
       - name: Syndicate build
         working-directory: ${{ env.APP_DIR }}
         env:
@@ -85,4 +89,4 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         env:
           SDCT_CONF: .syndicate-config-restaurant-backend-app
-        run: syndicate update
+        run: syndicate update --deploy_name ${{ env.DEPLOY_NAME }}
