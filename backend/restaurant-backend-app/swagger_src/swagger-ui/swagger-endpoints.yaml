@@ -157,6 +157,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /group-reservations/{groupReservationId}/submit:
+    post:
+      tags:
+        - Group Reservations
+      summary: Submit consolidated group pre-order
+      description: Submits the consolidated pre-order for a group reservation, converting submitted guest sessions into order items
+      operationId: submitGroupReservationPreOrder
+      parameters:
+        - name: groupReservationId
+          in: path
+          required: true
+          description: The ID of the group reservation
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitGroupPreOrderRequest'
+      responses:
+        '200':
+          description: Group pre-order submitted successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Consolidated dishes data
+        '400':
+          description: Invalid request - missing parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - only reservation owner can submit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation or group reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /guest/groups/{groupReservationId}/submit:
     post:
       tags:
@@ -483,6 +546,7 @@ paths:
     get:
       tags:
         - Guest Sessions
+        - Group Reservations
       summary: Get owner's guest session ID
       description: Retrieves the guest session ID for the reservation owner
       operationId: getOwnerSessionId
