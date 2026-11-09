@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TimeRange } from '@app/models/tables/time-range.model';
 import { formatTime } from '@app/shared/helpers/date-helpers';
@@ -12,10 +12,10 @@ import { formatTime } from '@app/shared/helpers/date-helpers';
   styleUrl: './time-slot.component.scss',
 })
 export class TimeSlotComponent {
-  @Input() timeRange!: TimeRange;
-  @Input() label?: string;
-  @Input() disabled = false;
-  @Input() showDate = false;
+  readonly timeRange = input.required<TimeRange>();
+  readonly label = input<string | undefined>(undefined);
+  readonly disabled = input<boolean>(false);
+  readonly showDate = input<boolean>(false);
 
   formatTimeRange(start: string): string {
     return `${formatTime(start)}`;

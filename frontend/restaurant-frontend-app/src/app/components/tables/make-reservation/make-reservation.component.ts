@@ -1,9 +1,11 @@
 import {
   Component,
   EventEmitter,
-  Input,
   Output,
-  ChangeDetectionStrategy, inject,
+  ChangeDetectionStrategy,
+  inject,
+  input,
+  model,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { CustomButtonComponent } from '@app/shared/custom-components/custom-button/custom-button.component';
@@ -12,7 +14,8 @@ import { CustomSelectComponent } from '@app/shared/custom-components/custom-sele
 import { Table } from '@app/models/tables/table.model';
 import { TimeRange } from '@app/models/tables/time-range.model';
 import { formatTime } from '@app/shared/helpers/date-helpers';
-import {ToastService} from '@app/services/toast/toast.service';
+import { ToastService } from '@app/services/toast/toast.service';
+
 @Component({
   selector: 'app-make-reservation',
   imports: [
@@ -27,11 +30,11 @@ import {ToastService} from '@app/services/toast/toast.service';
   styleUrl: './make-reservation.component.scss',
 })
 export class MakeReservationComponent {
-  @Input() title = 'Make a Reservation';
-  @Input() locationName!: string;
-  @Input() table!: Table;
-  @Input() selectedTimeRange!: TimeRange;
-  @Input() guests = 1;
+  readonly title = input<string>('Make a Reservation');
+  readonly locationName = input.required<string>();
+  readonly table = input.required<Table>();
+  readonly selectedTimeRange = model.required<TimeRange>();
+  readonly guests = model<number>(1);
 
   private toast = inject(ToastService);
 
@@ -42,19 +45,13 @@ export class MakeReservationComponent {
     guests: number;
   }>();
 
-  constructor() {
-    if (this.selectedTimeRange) {
-      this.onStartTimeChange(formatTime(this.selectedTimeRange.start));
-    }
-  }
-
   onMakeReservation() {
     this.makeReservation.emit({
-      tableId: this.table.id,
-      timeRange: this.selectedTimeRange,
-      guests: this.guests,
+      tableId: this.table().id,
+      timeRange: this.selectedTimeRange(),
+      guests: this.guests(),
     });
-   this.toast.success('Reservation created successfully.', 'Success');
+    this.toast.success('Reservation created successfully.', 'Success');
   }
 
   onClose() {
@@ -65,39 +62,42 @@ export class MakeReservationComponent {
     if (guests === undefined) {
       return;
     }
-    this.guests = guests;
+    this.guests.set(guests);
   }
+
   startTimeOptions() {
-    return this.table.timeRanges.map((range) => formatTime(range.start));
+    return this.table().timeRanges.map((range) => formatTime(range.start));
   }
 
   selectStartTime() {
-    if (this.selectedTimeRange) {
-      return formatTime(this.selectedTimeRange.start);
+    if (this.selectedTimeRange()) {
+      return formatTime(this.selectedTimeRange().start);
     }
     return '';
   }
 
   selectEndTime() {
-    if (this.selectedTimeRange) {
-      return formatTime(this.selectedTimeRange.end);
+    if (this.selectedTimeRange()) {
+      return formatTime(this.selectedTimeRange().end);
     }
     return '';
   }
 
   endTimeOptions() {
-    return this.table.timeRanges.map((range) => formatTime(range.end));
+    return this.table().timeRanges.map((range) => formatTime(range.end));
   }
 
   onStartTimeChange(startTime: string) {
-    this.selectedTimeRange =
-      this.table.timeRanges.find((range) => formatTime(range.start) === startTime) ||
-      this.selectedTimeRange;
+    const range = this.table().timeRanges.find((r) => formatTime(r.start) === startTime);
+    if (range) {
+      this.selectedTimeRange.set(range);
+    }
   }
 
   onEndTimeChange(endTime: string) {
-    this.selectedTimeRange =
-      this.table.timeRanges.find((range) => formatTime(range.end) === endTime) ||
-      this.selectedTimeRange;
+    const range = this.table().timeRanges.find((r) => formatTime(r.end) === endTime);
+    if (range) {
+      this.selectedTimeRange.set(range);
+    }
   }
 }

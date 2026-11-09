@@ -2,7 +2,7 @@
   <div class="modal-container" role="presentation" (click)="$event.stopPropagation()">
     <div>
       <div class="modal-header">
-        <h2 class="title">{{ title }}</h2>
+        <h2 class="title">{{ title() }}</h2>
         <button class="close-btn" (click)="onClose()">
           <img src="assets/svg/close.svg" alt="close button" />
         </button>
@@ -10,8 +10,8 @@
 
       <p class="subtitle">
         You are making a reservation at
-        <span class="body-bold">{{ locationName }}, Table {{ table.tableNumber }}</span>
-        for <span class="body-bold">{{ selectedTimeRange.start | date: 'MMM d, y' }}</span
+        <span class="body-bold">{{ locationName() }}, Table {{ table().tableNumber }}</span>
+        for <span class="body-bold">{{ selectedTimeRange().start | date: 'MMM d, y' }}</span
         >.
       </p>
     </div>
@@ -21,16 +21,16 @@
         <div>
           <h3>Guests</h3>
           <p class="subtitle">Please specify the number of guests.</p>
-          <p class="subtitle">Table seating capacity: {{ table.capacity }} people</p>
+          <p class="subtitle">Table seating capacity: {{ table().capacity }} people</p>
         </div>
 
         <app-custom-number
           class="guests-filter"
-          [currentValue]="guests"
+          [currentValue]="guests()"
           [iconPath]="'assets/svg/people-green.svg'"
           [placeholder]="'Guests'"
           [minValue]="1"
-          [maxValue]="table.capacity"
+          [maxValue]="table().capacity"
           (currentValueChange)="onGuestsChange($event)"
         />
       </div>
@@ -67,6 +67,6 @@
       </div>
     </div>
 
-    <app-custom-button (click)="onMakeReservation()">{{ title }}</app-custom-button>
+    <app-custom-button (click)="onMakeReservation()">{{ title() }}</app-custom-button>
   </div>
 </div>

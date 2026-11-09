@@ -3,7 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   inject,
-  Input,
+  input,
   OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -30,7 +30,7 @@ export class WaiterPreOrderPageComponent implements OnInit {
   createdByRole = '';
   tableName = '';
   reservationTime = '';
-  @Input() customClass = '';
+  readonly customClass = input<string>('');
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);

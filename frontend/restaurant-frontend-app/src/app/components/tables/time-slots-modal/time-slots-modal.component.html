@@ -9,18 +9,18 @@
       </div>
 
       <p class="subtitle">
-        There are <span class="bold-text">{{ table.timeRanges.length }} slots</span> available at
-        <span class="bold-text">{{ locationName }}, Table {{ table.id }}</span> for
-        <span class="bold-text">{{ date | date: 'MMM d, y' }}</span
-        >. There are <span class="bold-text">{{ table.timeRanges.length }} slots</span> available at
-        <span class="bold-text">{{ locationName }}, Table {{ table.tableNumber }}</span> for
-        <span class="bold-text">{{ date | date: 'MMM d, y' }}</span
+        There are <span class="bold-text">{{ table().timeRanges.length }} slots</span> available at
+        <span class="bold-text">{{ locationName() }}, Table {{ table().id }}</span> for
+        <span class="bold-text">{{ date() | date: 'MMM d, y' }}</span
+        >. There are <span class="bold-text">{{ table().timeRanges.length }} slots</span> available at
+        <span class="bold-text">{{ locationName() }}, Table {{ table().tableNumber }}</span> for
+        <span class="bold-text">{{ date() | date: 'MMM d, y' }}</span
         >.
       </p>
     </div>
 
     <div class="time-slots-list">
-      @for (slot of table.timeRanges; track slot.start) {
+      @for (slot of table().timeRanges; track slot.start) {
         <app-time-slot (click)="onTimeSlotSelected(slot)" [timeRange]="slot"></app-time-slot>
       }
     </div>

@@ -1,14 +1,14 @@
 import {
   Component,
   ElementRef,
-  Input,
   Output,
   EventEmitter,
   OnInit,
   ViewChild,
   OnDestroy,
   ChangeDetectionStrategy,
-  inject
+  inject,
+  input,
 } from '@angular/core';
 import QRCodeStyling from 'qr-code-styling';
 import { FeedbackQrService } from '@app/services/reservation/feedback-qr.service';
@@ -23,10 +23,10 @@ import { CustomButtonComponent } from '@app/shared/custom-components/custom-butt
   styleUrl: './feedback-qr-modal.component.scss',
 })
 export class FeedbackQrModalComponent implements OnInit, OnDestroy {
-  @Input() locationId!: string;
-  @Input() reservationId!: string;
-  @Input() waiterName!: string;
-  @Input() isNewFeedback = true;
+  readonly locationId = input.required<string>();
+  readonly reservationId = input.required<string>();
+  readonly waiterName = input.required<string>();
+  readonly isNewFeedback = input<boolean>(true);
 
   @ViewChild('qrcodeCanvas', { static: true }) qrCodeElement!: ElementRef;
 
@@ -38,13 +38,13 @@ export class FeedbackQrModalComponent implements OnInit, OnDestroy {
   private readonly qrService = inject(FeedbackQrService);
 
   ngOnInit(): void {
-    this.qrService.getAnonymousFeedbackToken(this.reservationId).subscribe({
+    this.qrService.getAnonymousFeedbackToken(this.reservationId()).subscribe({
       next: (token) => {
         this.feedbackUrl = this.qrService.generateFeedbackUrl(
           token,
-          this.reservationId,
-          this.waiterName,
-          this.isNewFeedback
+          this.reservationId(),
+          this.waiterName(),
+          this.isNewFeedback()
         );
         console.log('Feedback link:', this.feedbackUrl);
         this.qrCode = new QRCodeStyling({

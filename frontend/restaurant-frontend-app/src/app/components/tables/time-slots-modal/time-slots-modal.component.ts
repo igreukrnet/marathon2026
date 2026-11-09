@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectionStrategy, input } from '@angular/core';
 import { TimeSlotComponent } from '../time-slot/time-slot.component';
 import { DatePipe } from '@angular/common';
 import { TimeRange } from '@app/models/tables/time-range.model';
@@ -13,9 +13,9 @@ import { Table } from '@app/models/tables/table.model';
   styleUrl: './time-slots-modal.component.scss',
 })
 export class TimeSlotsModalComponent {
-  @Input() locationName!: string;
-  @Input() table!: Table;
-  @Input() date!: string;
+  readonly locationName = input.required<string>();
+  readonly table = input.required<Table>();
+  readonly date = input.required<string>();
 
   @Output() closeModal = new EventEmitter<void>();
   @Output() timeSlotSelected = new EventEmitter<{ table: Table; timeRange: TimeRange }>();
@@ -25,6 +25,6 @@ export class TimeSlotsModalComponent {
   }
 
   onTimeSlotSelected(timeSlot: TimeRange) {
-    this.timeSlotSelected.emit({ table: this.table, timeRange: timeSlot });
+    this.timeSlotSelected.emit({ table: this.table(), timeRange: timeSlot });
   }
 }
