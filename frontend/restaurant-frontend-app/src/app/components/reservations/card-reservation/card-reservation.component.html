@@ -164,10 +164,17 @@
         } @else if (role() === Roles.CUSTOMER) {
           <button
             type="button"
-            class="button button--primary button--large"
+            class="button button--secondary button--large"
             (click)="onPreOrder()"
           >
             Pre-order
+          </button>
+          <button
+            type="button"
+            class="button button--primary button--large"
+            (click)="onGroupPreOrder()"
+          >
+            Group Pre-Order
           </button>
         }
       }
