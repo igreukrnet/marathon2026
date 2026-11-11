@@ -89,6 +89,14 @@ jobs:
             name="${pair%%:*}"; provided="${pair##*:}"
             value="${!provided:-}"
             if [ -z "$value" ]; then value="${dotenv[$name]:-}"; fi
+            if [ -z "$value" ]; then
+              case "$name" in
+                UI_URL) value="https://d39qrruz3el5sv.cloudfront.net" ;;
+                API_URL) value="https://6dt85f01cf.execute-api.eu-north-1.amazonaws.com/develop" ;;
+                WAITER_USERNAME) value="waiter@greengorgian.com" ;;
+                WAITER_PASSWORD) value="WaiterPassword123!" ;;
+              esac
+            fi
             if [ -z "$value" ]; then echo "$name: not set"; continue; fi
             case "$name" in *USERNAME|*PASSWORD) echo "::add-mask::$value" ;; esac
             echo "$name=$value" >> "$GITHUB_ENV"
