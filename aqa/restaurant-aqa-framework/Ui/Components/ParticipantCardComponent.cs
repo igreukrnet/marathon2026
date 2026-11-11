@@ -17,4 +17,22 @@ public sealed class ParticipantCardComponent(ILocator root)
     public async Task<bool> IsSubmittedAsync() => await SubmittedChip.IsVisibleAsync();
     public async Task<bool> IsStillChoosingAsync() => await PendingChip.IsVisibleAsync();
     public Task RemoveAsync() => RemoveButton.ClickAsync();
+
+    public async Task<int> GetTotalQuantityAsync()
+    {
+        var count = await Items.CountAsync();
+        var total = 0;
+        for (var i = 0; i < count; i++)
+        {
+            var qtyLocator = Items.Nth(i).Locator(".qty");
+            if (await qtyLocator.IsVisibleAsync())
+            {
+                var qtyText = await qtyLocator.InnerTextAsync();
+                var digits = new string(qtyText.Where(char.IsDigit).ToArray());
+                if (int.TryParse(digits, out var q))
+                    total += q;
+            }
+        }
+        return total > 0 ? total : count;
+    }
 }

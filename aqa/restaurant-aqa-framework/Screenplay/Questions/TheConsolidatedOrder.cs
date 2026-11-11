@@ -9,12 +9,26 @@ public sealed class TheConsolidatedOrder(string? reservationId = null) : IQuesti
     public async Task<GetOrderResponse?> AnsweredByAsync(Actor actor)
     {
         var targetReservationId = reservationId ?? actor.Recall<ReservationResponse>().Id;
-        var waiter = await actor.AsksForAsync(new TheWaiterSession());
         var ordersApi = new OrdersApi(actor.UsingTheApi());
 
-        var response = await ordersApi.GetOrderAsync(targetReservationId, waiter.IdToken);
+        string? token = null;
+        if (actor.TryRecall<CustomerSession>(out var customer))
+            token = customer.IdToken;
+        else if (actor.TryRecall<WaiterSession>(out var waiter))
+            token = waiter.IdToken;
+
+        var response = await ordersApi.GetOrderAsync(targetReservationId, token);
+        if (!response.Ok && actor.TryRecall<CustomerSession>(out var cust))
+        {
+            response = await ordersApi.GetOrderAsync(targetReservationId, cust.IdToken);
+        }
+
         if (!response.Ok)
-            return null;
+        {
+            var body = await response.TextAsync();
+            throw new InvalidOperationException(
+                $"GetOrderAsync for reservation '{targetReservationId}' failed with {response.Status}: {body}");
+        }
 
         return await response.ReadAsAsync<GetOrderResponse>();
     }

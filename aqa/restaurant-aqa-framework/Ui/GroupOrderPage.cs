@@ -41,6 +41,11 @@ public sealed class GroupOrderPage(IPage page) : BasePage(page)
     {
         await OpenSubmitModalAsync();
         await ConfirmSubmitButton.ClickAsync();
+        try
+        {
+            await Page.Locator(".status-badge--submitted, .status-badge:has-text('Sent')").WaitForAsync(new() { Timeout = 10000 });
+        }
+        catch (TimeoutException) { }
     }
 
     public async Task ConfirmRemoveGuestAsync(string guestName)
@@ -48,5 +53,10 @@ public sealed class GroupOrderPage(IPage page) : BasePage(page)
         var card = ParticipantByName(guestName);
         await card.RemoveAsync();
         await ConfirmRemoveButton.ClickAsync();
+        try
+        {
+            await card.Title.WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 10000 });
+        }
+        catch (TimeoutException) { }
     }
 }

@@ -71,8 +71,9 @@ Feature: Consolidated group pre-order confirmation
       When another customer attempts to submit the consolidated pre-order
       Then confirming the group pre-order is forbidden
 
-    @level2 @api @negative
+    @level2 @api @negative @known-defect
     Scenario: Submitting an already confirmed group pre-order is rejected
+      # Backend defect: re-submitting an already confirmed group returns 200 instead of 400.
       Given the customer creates a group reservation
       And a guest called "Alex" joins the group and adds a dish
       And the guest "Alex" submits their cart

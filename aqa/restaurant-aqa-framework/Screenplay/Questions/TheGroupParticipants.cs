@@ -39,7 +39,7 @@ public sealed class TheGroupParticipants : IQuestion<IReadOnlyList<ParticipantSu
                     out var val) ? val : 0m;
 
                 var isSubmitted = await card.IsSubmittedAsync();
-                var itemsCount = await card.Items.CountAsync();
+                var itemsCount = await card.GetTotalQuantityAsync();
 
                 result.Add(new ParticipantSummary(title, cleanTotal, isSubmitted, itemsCount));
             }

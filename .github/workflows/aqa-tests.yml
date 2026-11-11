@@ -7,10 +7,14 @@ on:
         description: "Which scenarios to run"
         type: choice
         options:
-          - all
-          - ui
+          - level1
+          - level2
+          - level3
+          - homework
           - api
-        default: all
+          - ui
+          - all
+        default: level1
       custom_filter:
         description: >
           Optional Microsoft.Testing.Platform tree filter (overrides "scope" when set), e.g.
@@ -122,6 +126,14 @@ jobs:
 
           if [ -n "$custom_filter" ]; then
             filter="$custom_filter"
+          elif [ "$scope" = "level1" ]; then
+            filter="/*/*/*/*[Category=level1]"
+          elif [ "$scope" = "level2" ]; then
+            filter="/*/*/*/*[Category=level2]"
+          elif [ "$scope" = "level3" ]; then
+            filter="/*/*/*/*[Category=level3]"
+          elif [ "$scope" = "homework" ]; then
+            filter="/*/*/*/*[Category=level1] or /*/*/*/*[Category=level2] or /*/*/*/*[Category=level3]"
           elif [ "$scope" = "ui" ]; then
             filter="/*/*/*/*[Category=ui]"
           elif [ "$scope" = "api" ]; then

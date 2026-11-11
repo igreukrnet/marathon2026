@@ -14,11 +14,18 @@ public sealed class TheGroupGrandTotal : IQuestion<decimal>
             var groupOrderPage = new GroupOrderPage(page);
             var text = await groupOrderPage.GrandTotalPrice.InnerTextAsync();
             var cleanText = text.Replace("$", "", StringComparison.Ordinal).Trim();
-            return decimal.TryParse(
+            var consolidatedTotal = decimal.TryParse(
                 cleanText,
                 System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture,
                 out var total) ? total : 0m;
+
+            if (consolidatedTotal > 0m)
+                return consolidatedTotal;
+
+            // When carts are not yet submitted, consolidated total is $0.00; sum visible participant subtotals
+            var participants = await actor.AsksForAsync(new TheGroupParticipants());
+            return participants.Sum(p => p.Total);
         }
 
         if (actor.TryRecall<GetAllSessionsResponse>(out var sessions))

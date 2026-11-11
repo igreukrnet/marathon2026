@@ -30,14 +30,15 @@ public sealed class SetUpGroupReservation(int guestCount = 4, string? name = nul
             await waitersApi.AssignWaiterToLocationAsync(location.Id, waiterEmail);
         }
 
-        if (!actor.TryRecall<TableResponse>(out var table) || table.Capacity < guestCount)
+        if (!string.IsNullOrEmpty(name) || !actor.TryRecall<TableResponse>(out var table) || table.Capacity < guestCount)
         {
             await actor.AttemptsToAsync(new AddTable(guestCount));
             table = actor.Recall<TableResponse>();
         }
 
         var reservationsApi = new ReservationsApi(actor.UsingTheApi());
-        var startTime = DateTime.UtcNow.AddDays(1).Date.AddHours(19);
+        var hourOffset = name is null ? 0 : Math.Abs(name.GetHashCode()) % 4 + 1;
+        var startTime = DateTime.UtcNow.AddDays(1).Date.AddHours(19).AddHours(hourOffset);
         var request = SampleDataFactory.CreateReservationRequest(table.Id, startTime, guestCount);
 
         var createResponse = await reservationsApi.CreateReservationAsync(request, customer.IdToken);
