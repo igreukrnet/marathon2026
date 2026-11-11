@@ -1,0 +1,54 @@
+version: 0.2
+
+# AWS CodeBuild specification for running AQA tests on AWS
+# Reports are published directly into the CodeBuild Test Reports dashboard and S3
+
+env:
+  variables:
+    DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    HEADLESS: "true"
+    TRACE_MODE: "OnFailureOnly"
+  # Parameters can be loaded from AWS Systems Manager Parameter Store or Secrets Manager:
+  # parameter-store:
+  #   UI_URL: /aqa/ui_url
+  #   API_URL: /aqa/api_url
+  # secrets-manager:
+  #   WAITER_PASSWORD: /aqa/credentials:WAITER_PASSWORD
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 10
+      nodejs: 22
+    commands:
+      - echo "Installing dependencies..."
+      - cd aqa/restaurant-aqa-framework
+      - dotnet restore
+
+  pre_build:
+    commands:
+      - echo "Verifying build and lint..."
+      - dotnet format restaurant-aqa-framework.csproj --verify-no-changes --no-restore
+      - npx --yes gherkin-lint -c .gherkin-lintrc "Features/*.feature"
+      - dotnet build --configuration Release --no-restore
+      - pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+  build:
+    commands:
+      - echo "Executing AQA test suite..."
+      - |
+        dotnet bin/Release/net10.0/restaurant-aqa-framework.dll \
+          --report-trx \
+          --results-directory TestResults || true
+
+reports:
+  aqa-test-reports:
+    files:
+      - "TestResults/*.trx"
+    base-directory: "aqa/restaurant-aqa-framework"
+    file-format: VisualStudioTrx
+
+artifacts:
+  files:
+    - "aqa/restaurant-aqa-framework/TestResults/**/*"
+  name: aqa-test-artifacts-$(date +%Y%m%d%H%M%S)

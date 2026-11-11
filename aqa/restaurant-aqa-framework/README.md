@@ -1,19 +1,65 @@
 # Restaurant AQA framework
 
-End-to-end tests for the Green & Tasty restaurant application: Reqnroll (Gherkin) + TUnit + Playwright for .NET, with the Screenplay pattern.
+## Обраний напрям та підхід (Homework Assignment)
 
-Guidance for extending the suite (writing Gherkin, steps, Screenplay, test data, working with an AI assistant) is in [CLAUDE.md](CLAUDE.md).
+- **Напрям:** **Напрям 1. Груповий pre-order** (Рівні складності 1, 2 та 3).
+- **Підхід / Архітектура:** **BDD (Reqnroll / Gherkin) + Screenplay Pattern** (Actor, Abilities, Tasks, Questions, Memory) + **TUnit** + **Playwright for .NET**.
+- **Піраміда тестів:**
+  - **UI-тести (`@ui`):** Наскрізні сценарії користувача на сторінці огляду групового замовлення (`/reservations/:id/group-order`): перегляд учасників та динамічний перерахунок суми, видалення гостя через модальне діалогове вікно, підтвердження консолідованого замовлення, відображення замовлення у інтерфейсі ресторану/офіціанта.
+  - **API-тести (`@api`):** Авторизація, валідація бізнес-правил, крайові випадки (не-Owner, неавторизований, неіснуюча група, чужий гість, повторний submit) та підготовка тестових даних (бронювання, гості, кошики).
+
+### Зафіксована поведінка для невизначених специфікацією випадків
+
+| Випадок | Статус код | Очікувана поведінка / Повідомлення |
+|---|---|---|
+| Група без учасників | `200 OK` | `participants: []`, `total: 0` |
+| Перегляд сесій не від Owner (інший клієнт) | `403 Forbidden` | `Only the reservation owner can perform this action.` |
+| Перегляд або дії без авторизації | `401 Unauthorized` | Відмова в доступі |
+| Неіснуюча група або бронювання | `404 Not Found` | Повідомлення про відсутність ресурсу |
+| Підтвердження без підтверджених кошиків | `400 Bad Request` | `No submitted guest sessions found.` |
+| Підтвердження кошиків без страв | `400 Bad Request` | `No dishes found in submitted guest sessions.` |
+| Повторний submit уже надісланої групи | `400 Bad Request` | Заборона повторного submit |
+| Submit не від Owner | `403 Forbidden` | `Only the reservation owner can perform this action.` |
+| Видалення гостя з іншої групи | `400 Bad Request` | `Guest session does not belong to this group reservation.` |
+| Видалення неіснуючого гостя | `404 Not Found` | `Guest session with id ... not found.` |
+| Видалення гостя не від Owner | `403 Forbidden` | `Only the reservation owner can perform this action.` |
+| Видалення останнього гостя | `200 OK` | Група стає порожньою (`participants: []`, `total: 0`) |
+
+---
 
 ## Run the tests
 
 ```bash
 cp .env.example .env        # then fill in your own values (see "Configuration")
 dotnet build
-dotnet run --no-build -- --report-trx                          # everything
-dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=smoke]"   # by tag
+dotnet run --no-build -- --report-trx                                      # everything
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=level1]"     # Level 1: Review
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=level2]"     # Level 2: Confirmation
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=level3]"     # Level 3: Removal
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=ui]"         # UI scenarios only
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=api]"        # API scenarios only
+dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=smoke]"      # Smoke tests only
 ```
 
-Everything a run produces lands in `TestResults/`: the TUnit report and TRX, the Reqnroll report in `reqnroll/`, and Playwright traces in `traces/` (open one with `npx playwright show-trace <file>.zip`).
+Everything a run produces lands in `TestResults/`:
+- **TUnit Interactive Report:** `TestResults/*-report.html` (interactive web view) and `.trx`
+- **Reqnroll Report:** `TestResults/reqnroll/`
+- **Playwright Traces:** `TestResults/traces/*.zip` (open with `npx playwright show-trace <file>.zip`)
+
+---
+
+## Reporting & SDLC (Завдання з зірочкою)
+
+### 1. Report Portal
+- **Локальний запуск:** `docker compose -f docker-compose.reportportal.yml up -d` (доступно на `http://localhost:8080`).
+- **Конфігурація:** `ReportPortal.config.json` підтримує змінні оточення `RP_SERVER_URL`, `RP_API_KEY`, `RP_PROJECT`, `RP_LAUNCH`.
+
+### 2. AWS CodeBuild Pipeline
+- **Специфікація:** `buildspec.yml` запускає тести у хмарі AWS CodeBuild.
+- **Вбудовані звіти:** TRX автоматично публікується у вкладку "Reports" AWS CodeBuild.
+- **Артефакти:** HTML-звіти та traces зберігаються у бакеті Amazon S3.
+
+---
 
 Some scenarios are expected to fail (`@known-defect`, bugs in the application) or are skipped (`@wip`, no admin account configured). That is intentional.
 

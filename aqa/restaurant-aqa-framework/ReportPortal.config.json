@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/reportportal/agent-net-reqnroll/master/ReportPortal.ReqnrollPlugin/ReportPortal.config.schema.json",
+  "enabled": false,
+  "server": {
+    "url": "http://localhost:8080/api/v1",
+    "apiKey": "YOUR_REPORTPORTAL_API_KEY",
+    "project": "default_personal"
+  },
+  "launch": {
+    "name": "Restaurant AQA Test Suite",
+    "description": "Automated tests for Direction 1: Group Pre-order (Levels 1, 2, 3)",
+    "tags": ["Reqnroll", "Playwright", "Level1", "Level2", "Level3"]
+  }
+}
