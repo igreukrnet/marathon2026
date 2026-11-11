@@ -48,6 +48,7 @@ jobs:
       # Default anyway (Configuration/Settings.cs) - set explicitly so the choice is visible here:
       # a trace is only captured for a failed @ui scenario (or one tagged @trace-always).
       TRACE_MODE: "OnFailureOnly"
+      MAX_PARALLEL_TESTS: "1"
     steps:
       - uses: actions/checkout@v5
 
@@ -116,6 +117,9 @@ jobs:
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
+      - name: Install Playwright browsers
+        run: pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Resolve test filter
         id: filter
