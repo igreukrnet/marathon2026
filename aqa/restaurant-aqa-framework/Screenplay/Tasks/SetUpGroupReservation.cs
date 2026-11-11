@@ -1,4 +1,5 @@
 using Restaurant_Aqa_Framework.Api;
+using Restaurant_Aqa_Framework.Api.Dtos.Dishes;
 using Restaurant_Aqa_Framework.Api.Dtos.GroupReservations;
 using Restaurant_Aqa_Framework.Api.Dtos.Locations;
 using Restaurant_Aqa_Framework.Api.Dtos.Reservations;
@@ -17,8 +18,17 @@ public sealed class SetUpGroupReservation(int guestCount = 4, string? name = nul
             customer = actor.Recall<CustomerSession>();
         }
 
-        if (!actor.TryRecall<LocationResponse>(out _))
+        if (!actor.TryRecall<LocationResponse>(out var location))
+        {
             await actor.AttemptsToAsync(new SetUpLocation());
+            location = actor.Recall<LocationResponse>();
+        }
+
+        if (Configuration.Settings.Current.WaiterUsername is { Length: > 0 } waiterEmail)
+        {
+            var waitersApi = new WaitersApi(actor.UsingTheApi());
+            await waitersApi.AssignWaiterToLocationAsync(location.Id, waiterEmail);
+        }
 
         if (!actor.TryRecall<TableResponse>(out var table) || table.Capacity < guestCount)
         {
@@ -50,6 +60,22 @@ public sealed class SetUpGroupReservation(int guestCount = 4, string? name = nul
                 $"Fetching group invite failed with {inviteDetailsResponse.Status}: {await inviteDetailsResponse.ReadErrorMessageAsync()}");
 
         var groupInvite = await inviteDetailsResponse.ReadAsAsync<GuestInviteResponse>();
+
+        // Create an initial order for the reservation so that group submit can populate it
+        var dish = actor.Recall<DishResponse>();
+        var ordersApi = new OrdersApi(actor.UsingTheApi());
+        var orderResponse = await ordersApi.CreateOrderAsync(
+            new Restaurant_Aqa_Framework.Api.Dtos.Orders.CreateOrderRequest(
+                reservation.Id,
+                [new Restaurant_Aqa_Framework.Api.Dtos.Orders.OrderItemRequest(dish.Id, 1)]),
+            customer.IdToken);
+        if (!orderResponse.Ok)
+            throw new InvalidOperationException(
+                $"Creating initial order failed with {orderResponse.Status}: {await orderResponse.ReadErrorMessageAsync()}");
+
+        actor.Recall<CleanupScope>().TrackDelete(
+            $"order:{reservation.Id}",
+            () => ordersApi.DeleteOrderAsync(reservation.Id, customer.IdToken));
 
         if (name is null)
         {

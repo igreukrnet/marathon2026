@@ -34,7 +34,8 @@ Feature: Group pre-order participants review
     Scenario: Participants who have not submitted carts are marked accordingly
       Given the customer creates a group reservation
       And a guest called "Alex" joins the group and adds a dish
-      And a guest called "Olena" joins the group and submits their cart
+      And a guest called "Olena" joins the group and adds a dish
+      And the guest "Olena" submits their cart
       When the owner views the group sessions
       Then "Alex" is listed as still choosing
       And "Olena" is listed as submitted

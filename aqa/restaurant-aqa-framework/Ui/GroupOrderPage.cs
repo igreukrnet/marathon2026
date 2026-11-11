@@ -14,7 +14,7 @@ public sealed class GroupOrderPage(IPage page) : BasePage(page)
     public ILocator EmptyNotice => Page.Locator(".empty-state-notice");
     public ILocator ErrorState => Page.Locator(".state-container.error-state");
 
-    public ILocator ParticipantCards => Page.Locator("ul.participants-list > li.participant-item app-participant-card");
+    public ILocator ParticipantCards => Page.Locator("app-participant-card");
     public ILocator ConsolidatedItems => Page.Locator("ul.consolidated-dishes-list > li.consolidated-dish-item");
     public ILocator ConsolidatedEmptyNotice => Page.Locator(".consolidated-empty");
     public ILocator GrandTotalPrice => Page.Locator(".grand-total-price");

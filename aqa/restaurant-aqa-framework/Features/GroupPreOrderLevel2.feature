@@ -55,9 +55,8 @@ Feature: Consolidated group pre-order confirmation
     Scenario: Confirmation is rejected when submitted carts contain no dishes
       Given the customer creates a group reservation
       And a guest called "Alex" joins the group without adding dishes
-      And the guest "Alex" submits their cart
-      When the owner attempts to submit the consolidated pre-order
-      Then the submission is rejected because no dishes were selected
+      When the guest "Alex" attempts to submit their cart
+      Then the submission is rejected because the cart is empty
 
     @level2 @api @negative
     Scenario: Confirming a non-existent group pre-order is rejected

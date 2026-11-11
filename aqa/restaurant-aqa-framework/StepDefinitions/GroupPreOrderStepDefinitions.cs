@@ -27,10 +27,13 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
         Actor.AttemptsToAsync(new SetUpGroupReservation(name: name));
 
     [Given("a guest called {string} joins the group and adds a dish")]
+    public Task GivenGuestJoinsAndAddsOneDish(string guestName) =>
+        GivenGuestJoinsAndAddsDishes(guestName, 1);
+
     [Given("a guest called {string} joins the group and adds {int} dish")]
     [Given("a guest called {string} joins the group and adds {int} dishes")]
     [Given("a guest called {string} joins the group and adds {int} of the dish")]
-    public async Task GivenGuestJoinsAndAddsDishes(string guestName, int count = 1)
+    public async Task GivenGuestJoinsAndAddsDishes(string guestName, int count)
     {
         await Actor.AttemptsToAsync(new JoinGroupAsGuest(guestName));
         await Actor.AttemptsToAsync(new AddDishToGuestCart(guestName, quantity: count));
@@ -39,6 +42,13 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     [Given("a guest called {string} joins the group without adding dishes")]
     public Task GivenGuestJoinsWithoutDishes(string guestName) =>
         Actor.AttemptsToAsync(new JoinGroupAsGuest(guestName));
+
+    [Given("a guest called {string} joins the group and submits their cart")]
+    public async Task GivenGuestJoinsAndSubmits(string guestName)
+    {
+        await Actor.AttemptsToAsync(new JoinGroupAsGuest(guestName));
+        await Actor.AttemptsToAsync(new SubmitGuestCart(guestName));
+    }
 
     [Given("a guest called {string} joins the {string} group")]
     public Task GivenGuestJoinsNamedGroup(string guestName, string groupName)
@@ -176,8 +186,18 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     }
 
     [When("a customer attempts to view sessions of a non-existent group")]
-    public Task WhenCustomerViewsNonExistentGroup() =>
-        Actor.AttemptsToAsync(new ViewSessionsForGroup(groupReservationId: NonExistentId, mustSucceed: false));
+    public async Task WhenCustomerViewsNonExistentGroup()
+    {
+        if (!Actor.TryRecall<CustomerSession>(out var customer))
+        {
+            await Actor.AttemptsToAsync(new RegisterAndSignInCustomer());
+            customer = Actor.Recall<CustomerSession>();
+        }
+        await Actor.AttemptsToAsync(new ViewSessionsForGroup(
+            groupReservationId: NonExistentId,
+            bearerToken: customer.IdToken,
+            mustSucceed: false));
+    }
 
     [Then("the group is reported as not found")]
     public async Task ThenGroupNotFound()
@@ -201,9 +221,24 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     // Level 2: Confirmation Steps
     // ----------------------------------------------------
 
+    [Given("the owner submits the consolidated pre-order")]
     [When("the owner submits the consolidated pre-order")]
     public Task WhenOwnerSubmitsPreOrder() =>
         Actor.AttemptsToAsync(new SubmitGroupPreOrder(throughUi: Actor.Can<IBrowseTheWeb>()));
+
+    [When("the guest {string} attempts to submit their cart")]
+    public Task WhenGuestAttemptsToSubmitCart(string guestName) =>
+        Actor.AttemptsToAsync(new SubmitGuestCart(guestName, mustSucceed: false));
+
+    [Then("the submission is rejected because the cart is empty")]
+    [Then("the submission is rejected because no dishes were selected")]
+    public async Task ThenSubmissionRejectedCartEmpty()
+    {
+        var outcome = await Actor.AsksForAsync(new TheOutcome());
+        await Assert.That(outcome.Status).IsEqualTo(400);
+        await Assert.That(outcome.Body.Contains("cart is empty", StringComparison.OrdinalIgnoreCase) ||
+                          outcome.Body.Contains("no dishes", StringComparison.OrdinalIgnoreCase)).IsTrue();
+    }
 
     [Then("the group pre-order is marked as sent to the restaurant")]
     public async Task ThenGroupPreOrderMarkedSent()
@@ -260,11 +295,19 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     }
 
     [When("a customer attempts to submit a pre-order for a non-existent group")]
-    public Task WhenCustomerSubmitsNonExistentGroup() =>
-        Actor.AttemptsToAsync(new SubmitGroupPreOrder(
+    public async Task WhenCustomerSubmitsNonExistentGroup()
+    {
+        if (!Actor.TryRecall<CustomerSession>(out var customer))
+        {
+            await Actor.AttemptsToAsync(new RegisterAndSignInCustomer());
+            customer = Actor.Recall<CustomerSession>();
+        }
+        await Actor.AttemptsToAsync(new SubmitGroupPreOrder(
             groupReservationId: NonExistentId,
             reservationId: NonExistentId,
+            bearerToken: customer.IdToken,
             mustSucceed: false));
+    }
 
     [When("another customer attempts to submit the consolidated pre-order")]
     public async Task WhenAnotherCustomerSubmitsPreOrder()

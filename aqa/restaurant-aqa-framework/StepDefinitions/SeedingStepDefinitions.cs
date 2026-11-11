@@ -46,9 +46,11 @@ public sealed class SeedingStepDefinitions(Actor actor) : StepDefinitionBase(act
         await Assert.That(outcome.Status).IsEqualTo(201).Because($"response body was: {outcome.Body}");
     }
 
+    [Given("the manager adds a dish to the location")]
     [When("the manager adds a dish to the location")]
     public Task WhenManagerAddsADish() => Actor.AttemptsToAsync(new AddDish());
 
+    [Given("the manager adds a {dish_type} dish to the location")]
     [When("the manager adds a {dish_type} dish to the location")]
     public Task WhenManagerAddsADishOfType(DishType type) => Actor.AttemptsToAsync(new AddDish(type));
 

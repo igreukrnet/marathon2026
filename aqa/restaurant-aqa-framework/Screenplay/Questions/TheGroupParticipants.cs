@@ -14,6 +14,15 @@ public sealed class TheGroupParticipants : IQuestion<IReadOnlyList<ParticipantSu
         {
             var page = actor.LookingAtThePage();
             var groupOrderPage = new GroupOrderPage(page);
+            try
+            {
+                await page.Locator("app-participant-card, .empty-state-notice, .state-container.error-state")
+                    .First.WaitForAsync(new() { Timeout = 10000 });
+            }
+            catch (TimeoutException)
+            {
+                // Fallback to reading whatever is present
+            }
             var cardsCount = await groupOrderPage.ParticipantCards.CountAsync();
             var result = new List<ParticipantSummary>();
 

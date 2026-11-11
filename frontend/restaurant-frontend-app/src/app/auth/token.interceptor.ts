@@ -17,10 +17,10 @@ export const tokenInterceptor: HttpInterceptorFn = (
 ) => {
   const toastr = inject(ToastService);
 
-  // IMPORTANT: do not modify Guest endpoints at all.
+  // IMPORTANT: do not modify Guest endpoints at all (except owner group management /guest/groups/).
   // Guest flow uses a different token (guest session token) and we must not touch the body.
   // Otherwise we break POST /guest/sessions payload.
-  if (req.url.includes('/guest/')) {
+  if (req.url.includes('/guest/') && !req.url.includes('/guest/groups/')) {
     return next(req).pipe(
       catchError((error: HttpErrorResponse) => {
         console.log(error);
