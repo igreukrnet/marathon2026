@@ -1,0 +1,23 @@
+[2026-11-12T22:22:51.9630936Z] GET https://6dt85f01cf.execute-api.eu-north-1.amazonaws.com/develop/dishes? (attempt 1/3, 631 ms)
+Request headers:
+  (none)
+Request body:
+  (empty)
+Response: 200 OK
+Response headers:
+  content-type: application/json
+  content-length: 2
+  connection: keep-alive
+  date: Thu, 12 Nov 2026 22:22:51 GMT
+  x-amzn-trace-id: Root=1-6af63c3b-40f90a7053f4f4cf228bff82;Parent=2b1e1c5ee209540d;Sampled=0;Lineage=1:7a58b785:0
+  x-amzn-requestid: 88fe453b-39a7-4196-8b56-132907fe0270
+  access-control-allow-origin: *
+  access-control-allow-headers: Content-Type, Authorization
+  x-amz-apigw-id: Gv5ZbHk5Ai0EXfw=
+  access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+  x-cache: Miss from cloudfront
+  via: 1.1 2f64e28be83a9bbc21e5afb1a93fec2c.cloudfront.net (CloudFront)
+  x-amz-cf-pop: HIO52-P2
+  x-amz-cf-id: 1DTMnPvAF-xs0JixvwFvYFvIanGWs-YAckpIOSkQbzBB7_IiYH3W5w==
+Response body:
+  []

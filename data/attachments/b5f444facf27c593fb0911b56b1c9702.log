@@ -1,0 +1,23 @@
+[2026-11-12T22:22:52.7788953Z] GET https://6dt85f01cf.execute-api.eu-north-1.amazonaws.com/develop/dishes/popular (attempt 1/3, 729 ms)
+Request headers:
+  (none)
+Request body:
+  (empty)
+Response: 200 OK
+Response headers:
+  content-type: application/json
+  content-length: 2
+  connection: keep-alive
+  date: Thu, 12 Nov 2026 22:22:52 GMT
+  x-amzn-trace-id: Root=1-6af63c3c-580b62216db857ef739d9707;Parent=07702384d68534e6;Sampled=0;Lineage=1:7a58b785:0
+  x-amzn-requestid: e0120470-a0d8-4e51-8263-b8a521a96464
+  access-control-allow-origin: *
+  access-control-allow-headers: Content-Type, Authorization
+  x-amz-apigw-id: Gv5ZiHDtAi0ETlA=
+  access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+  x-cache: Miss from cloudfront
+  via: 1.1 4894bef31db1c311602a51393339af0a.cloudfront.net (CloudFront)
+  x-amz-cf-pop: HIO52-P2
+  x-amz-cf-id: WY4YyHbph3EAgo4xpg8qot-OfAPQiwQI3hpmnY47jex8wRVly4C-vA==
+Response body:
+  []
