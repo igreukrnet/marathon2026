@@ -93,9 +93,7 @@ Feature: Registration
         | first name | too long    | First name must be up to 50 characters.                 |
         | first name | with digits | Only Latin letters, hyphens, and apostrophes are allowed. |
 
-      # Known defect (expected to fail until fixed): the last name field shows the first name's
-      # wording ("First name is required.") for its required and length messages.
-      @names @known-defect
+      @names
       Examples: Last name messages
         | field     | problem            | message                                                   |
         | last name | empty              | Last name is required.                                    |
