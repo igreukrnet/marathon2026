@@ -208,6 +208,34 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: Generate Allure report
+        if: always()
+        uses: simple-elf/allure-report-action@v1.11
+        with:
+          allure_results: aqa/restaurant-aqa-framework/TestResults/allure-results
+          allure_report: aqa/restaurant-aqa-framework/TestResults/allure-report
+          gh_pages: none
+          allure_history: false
+          keep_reports: 20
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: aqa/restaurant-aqa-framework/TestResults/allure-results/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: aqa/restaurant-aqa-framework/TestResults/allure-report/
+          if-no-files-found: warn
+          retention-days: 30
+
       # Always runs, whatever the test step did: counts and failed scenarios come from the TRX the
       # run wrote, so the summary stays useful for a red run and says so plainly when the test
       # process died before producing any results.
@@ -247,6 +275,7 @@ jobs:
                   print(f"- {name}")
               print()
           print("Reports, traces and the TRX are attached to this run as artifacts.")
+          print("Allure raw results and generated HTML report (if produced) are attached as `allure-results` / `allure-report` artifacts.")
           PY
 
       - name: Fail the job if tests failed

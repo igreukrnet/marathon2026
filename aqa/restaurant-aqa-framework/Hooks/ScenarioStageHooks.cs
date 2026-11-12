@@ -1,5 +1,8 @@
+using System.Text;
+using Allure.Net.Commons;
 using Microsoft.Playwright;
 using Reqnroll.BoDi;
+using Restaurant_Aqa_Framework.Api;
 using Restaurant_Aqa_Framework.Api.Seeding;
 using Restaurant_Aqa_Framework.Configuration;
 using Restaurant_Aqa_Framework.Contexts;
@@ -19,6 +22,12 @@ namespace Restaurant_Aqa_Framework.Hooks;
 [Binding]
 public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scenario)
 {
+    [BeforeScenario("ui", "api")]
+    public static void BeginApiLogScope()
+    {
+        ApiCallLogger.BeginScope();
+    }
+
     [BeforeScenario("ui")]
     public async Task SetUpUiStage()
     {
@@ -80,14 +89,18 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
             await cleanup.DisposeAsync();
     }
 
-    [AfterScenario("ui", "api")]
+    [AfterScenario("ui", "api", Order = 100)]
     public async Task TearDownStage(ScenarioContext scenarioContext, IReqnrollOutputHelper outputHelper)
     {
         var stage = container.Resolve<IStageContext>();
 
-        // Dispose even if saving the trace throws, so a failed teardown never leaks a browser context.
         try
         {
+            AttachApiLogsToAllure();
+
+            var failed = scenarioContext.TestError is not null and not TUnit.Core.Exceptions.SkipTestException;
+            string? tracePath = null;
+
             if (stage is UiStageContext ui)
             {
                 try
@@ -96,10 +109,16 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
                     var page = pages.Count > 0 ? pages[^1] : null;
                     if (page is not null)
                     {
-                        var title = string.Concat(scenarioContext.ScenarioInfo.Title.Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
-                        var screenshotPath = Path.Combine(ArtifactPaths.Screenshots, $"{title[..Math.Min(title.Length, 60)]}.png");
+                        var title = SanitizeTitle(scenarioContext.ScenarioInfo.Title);
+                        var screenshotPath = Path.Combine(ArtifactPaths.Screenshots, $"{title}.png");
                         await page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshotPath, FullPage = true });
                         outputHelper.AddAttachment(screenshotPath);
+
+                        if (File.Exists(screenshotPath))
+                        {
+                            var attachmentName = failed ? "UI screenshot on failure" : "UI screenshot";
+                            AllureApi.AddAttachment(attachmentName, "image/png", screenshotPath);
+                        }
                     }
                 }
                 catch
@@ -107,7 +126,9 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
                     // Ignore screenshot capture failure to ensure trace and teardown proceed
                 }
 
-                await HandleTrace(ui.BrowserContext, scenarioContext, outputHelper);
+                tracePath = await HandleTrace(ui.BrowserContext, scenarioContext, outputHelper);
+                if (failed && tracePath is not null && File.Exists(tracePath))
+                    AllureApi.AddAttachment("Playwright trace on failure", "application/zip", tracePath);
             }
         }
         finally
@@ -116,7 +137,30 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
         }
     }
 
-    private static async Task HandleTrace(IBrowserContext browserContext, ScenarioContext scenarioContext, IReqnrollOutputHelper outputHelper)
+    private static void AttachApiLogsToAllure()
+    {
+        var logs = ApiCallLogger.SnapshotCurrent();
+        if (logs.Count == 0)
+            return;
+
+        var sb = new StringBuilder();
+        for (var i = 0; i < logs.Count; i++)
+        {
+            if (i > 0) sb.AppendLine().AppendLine(new string('-', 60));
+            sb.Append(logs[i]);
+        }
+
+        try
+        {
+            AllureApi.AddAttachment("API request/response logs", "text/plain", Encoding.UTF8.GetBytes(sb.ToString()), ".log");
+        }
+        catch
+        {
+            // Do not fail scenario teardown if Allure attachment fails.
+        }
+    }
+
+    private static async Task<string?> HandleTrace(IBrowserContext browserContext, ScenarioContext scenarioContext, IReqnrollOutputHelper outputHelper)
     {
         // A skipped scenario surfaces as an exception too, but it did not fail.
         var failed = scenarioContext.TestError is not null and not TUnit.Core.Exceptions.SkipTestException;
@@ -126,13 +170,20 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
         if (Settings.Current.TraceMode == TraceMode.Never || !(failed || alwaysTrace))
         {
             await browserContext.Tracing.StopAsync();
-            return;
+            return null;
         }
 
-        var title = string.Concat(scenarioContext.ScenarioInfo.Title.Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
+        var title = SanitizeTitle(scenarioContext.ScenarioInfo.Title);
         var status = failed ? "failed" : "passed";
-        var path = Path.Combine(ArtifactPaths.Traces, $"{status}-{title[..Math.Min(title.Length, 60)]}-{Guid.NewGuid():N}.zip");
+        var path = Path.Combine(ArtifactPaths.Traces, $"{status}-{title}-{Guid.NewGuid():N}.zip");
         await browserContext.Tracing.StopAsync(new TracingStopOptions { Path = path });
         outputHelper.AddAttachment(path);
+        return path;
+    }
+
+    private static string SanitizeTitle(string title)
+    {
+        var cleaned = string.Concat(title.Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
+        return cleaned.Length > 60 ? cleaned[..60] : cleaned;
     }
 }

@@ -8,6 +8,9 @@ namespace Restaurant_Aqa_Framework.Core;
 ///   *-report.html, *.trx, *.json   TUnit report / TRX (--report-trx; also the re-run-failed TRX files)
 ///   reqnroll/                      Reqnroll HTML report + messages ndjson (see reqnroll.json)
 ///   traces/                        Playwright trace zips (npx playwright show-trace &lt;file&gt;)
+///   screenshots/                   UI screenshots captured per scenario
+///   allure-results/                Raw Allure results (JSON/attachments)
+///   allure-report/                 Generated Allure HTML report (CI/local generate step)
 /// </code>
 /// The root is the project folder's `TestResults/` locally (found by walking up from the
 /// binaries to the `.csproj`) and falls back to `TestResults/` next to the binaries when
@@ -21,12 +24,52 @@ public static class ArtifactPaths
 
     public static string Screenshots => Directory.CreateDirectory(Path.Combine(Root, "screenshots")).FullName;
 
+    public static string AllureResults => Directory.CreateDirectory(Path.Combine(Root, "allure-results")).FullName;
+
+    public static string AllureReport => Path.Combine(Root, "allure-report");
+
     /// <summary>Removes traces left by earlier runs, so the folder only ever holds the current run's.</summary>
     public static void ClearTraces()
     {
         var traces = Path.Combine(Root, "traces");
         if (Directory.Exists(traces))
-            Directory.Delete(traces, recursive: true);
+        {
+            try
+            {
+                Directory.Delete(traces, recursive: true);
+            }
+            catch
+            {
+                // Ignore transient delete issues
+            }
+        }
+        Directory.CreateDirectory(traces);
+    }
+
+    /// <summary>Removes Allure raw results from earlier runs to avoid mixing test executions.</summary>
+    public static void ClearAllureResults()
+    {
+        var results = Path.Combine(Root, "allure-results");
+        if (Directory.Exists(results))
+        {
+            try
+            {
+                var dir = new DirectoryInfo(results);
+                foreach (var file in dir.GetFiles())
+                {
+                    try { file.Delete(); } catch { }
+                }
+                foreach (var sub in dir.GetDirectories())
+                {
+                    try { sub.Delete(true); } catch { }
+                }
+            }
+            catch
+            {
+                // Ignore transient delete issues
+            }
+        }
+        Directory.CreateDirectory(results);
     }
 
     private static string ResolveRoot()

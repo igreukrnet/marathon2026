@@ -42,6 +42,7 @@ dotnet run --no-build -- --treenode-filter "/*/*/*/*[Category=smoke]"      # Smo
 ```
 
 Everything a run produces lands in `TestResults/`:
+- **Allure Results & Report:** `TestResults/allure-results/` (сирі дані) та `TestResults/allure-report/` (HTML-звіт)
 - **TUnit Interactive Report:** `TestResults/*-report.html` (interactive web view) and `.trx`
 - **Reqnroll Report:** `TestResults/reqnroll/`
 - **Playwright Traces:** `TestResults/traces/*.zip` (open with `npx playwright show-trace <file>.zip`)
@@ -50,11 +51,23 @@ Everything a run produces lands in `TestResults/`:
 
 ## Reporting & SDLC (Завдання з зірочкою)
 
-### 1. Report Portal
+### 1. Allure Report
+- **Сирі результати:** автоматично пишуться у `TestResults/allure-results/` під час виконання тестів.
+- **Вкладення (attachments):**
+  - При падінні UI-сценарію: скриншот екрана (`UI screenshot on failure`, `image/png`) та Playwright trace zip (`Playwright trace on failure`, `application/zip`).
+  - Логи API: структурований лог HTTP-запитів та відповідей (`API request/response logs`, `text/plain`) із часом виконання, статусами, ретраями та автоматичним маскуванням паролів, bearer-токенів та секретів у заголовках та payload.
+- **Локальна генерація та перегляд:**
+  ```bash
+  npx allure generate TestResults/allure-results -o TestResults/allure-report --clean
+  npx allure open TestResults/allure-report
+  ```
+- **CI (GitHub Actions):** крок `Generate Allure report` на базі `simple-elf/allure-report-action` формує HTML-звіт навіть при падінні тестів (`if: always()`). До прогону прикріплюються артефакти `allure-report` (готовий HTML) та `allure-results` (для інтеграцій/історії).
+
+### 2. Report Portal
 - **Локальний запуск:** `docker compose -f docker-compose.reportportal.yml up -d` (доступно на `http://localhost:8080`).
 - **Конфігурація:** `ReportPortal.config.json` підтримує змінні оточення `RP_SERVER_URL`, `RP_API_KEY`, `RP_PROJECT`, `RP_LAUNCH`.
 
-### 2. AWS CodeBuild Pipeline
+### 3. AWS CodeBuild Pipeline
 - **Специфікація:** `buildspec.yml` запускає тести у хмарі AWS CodeBuild.
 - **Вбудовані звіти:** TRX автоматично публікується у вкладку "Reports" AWS CodeBuild.
 - **Артефакти:** HTML-звіти та traces зберігаються у бакеті Amazon S3.
