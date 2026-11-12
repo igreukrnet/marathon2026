@@ -8,7 +8,7 @@ public sealed record DeleteWaiterRequest(string Email);
 public sealed class WaitersApi(IAPIRequestContext api) : ApiClientBase(api)
 {
     public Task<IAPIResponse> AddWaiterAsync(string locationId, string email) =>
-        Api.PostAsync(Url("/waiters"), new APIRequestContextOptions
+        PostAsync(Url("/waiters"), new APIRequestContextOptions
         {
             DataString = Serialize(new AddWaiterToLocationRequest(locationId, email)),
             Headers = Headers(),

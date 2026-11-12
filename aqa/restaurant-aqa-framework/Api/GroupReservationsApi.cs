@@ -34,7 +34,7 @@ public sealed class GroupReservationsApi(IAPIRequestContext api) : ApiClientBase
 
     public Task<IAPIResponse> SubmitGroupPreOrderAsync(
         string groupReservationId, SubmitGroupPreOrderRequest request, string? bearerToken = null) =>
-        Api.PostAsync(Url($"/group-reservations/{groupReservationId}/submit"), new APIRequestContextOptions
+        PostAsync(Url($"/group-reservations/{groupReservationId}/submit"), new APIRequestContextOptions
         {
             DataString = Serialize(request),
             Headers = Headers(bearerToken),

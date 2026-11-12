@@ -1,6 +1,9 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Playwright;
 using Restaurant_Aqa_Framework.Configuration;
-using System.Text.Json;
 
 namespace Restaurant_Aqa_Framework.Api;
 
@@ -18,29 +21,113 @@ public abstract class ApiClientBase(IAPIRequestContext api)
 
     // The shared "develop" backend answers an occasional transient 500 ({"message": "Internal server
     // error"} from API Gateway/Lambda). Idempotent calls are retried a couple of times so that noise
-    // doesn't fail an unrelated scenario; POST is never retried (it could create twice), and every retry
-    // is logged so real flakiness stays visible.
+    // doesn't fail an unrelated scenario; POST/PATCH are not retried (they could create/mutate twice),
+    // and every attempt is logged so real flakiness stays visible.
     protected Task<IAPIResponse> GetAsync(string url, APIRequestContextOptions? options = null) =>
-        SendWithRetryAsync("GET", url, () => Api.GetAsync(url, options));
+        SendWithRetryAsync("GET", url, options, () => Api.GetAsync(url, options));
+
+    protected Task<IAPIResponse> PostAsync(string url, APIRequestContextOptions? options = null) =>
+        SendLoggedAsync("POST", url, options, () => Api.PostAsync(url, options));
 
     protected Task<IAPIResponse> PutAsync(string url, APIRequestContextOptions? options = null) =>
-        SendWithRetryAsync("PUT", url, () => Api.PutAsync(url, options));
+        SendWithRetryAsync("PUT", url, options, () => Api.PutAsync(url, options));
+
+    protected Task<IAPIResponse> PatchAsync(string url, APIRequestContextOptions? options = null) =>
+        SendLoggedAsync("PATCH", url, options, () => Api.PatchAsync(url, options));
 
     protected Task<IAPIResponse> DeleteAsync(string url, APIRequestContextOptions? options = null) =>
-        SendWithRetryAsync("DELETE", url, () => Api.DeleteAsync(url, options));
+        SendWithRetryAsync("DELETE", url, options, () => Api.DeleteAsync(url, options));
 
-    private static async Task<IAPIResponse> SendWithRetryAsync(string method, string url, Func<Task<IAPIResponse>> send)
+    private static Task<IAPIResponse> SendLoggedAsync(string method, string url, APIRequestContextOptions? options, Func<Task<IAPIResponse>> send) =>
+        SendCoreAsync(method, url, options, send, retryOnServerError: false);
+
+    private static Task<IAPIResponse> SendWithRetryAsync(string method, string url, APIRequestContextOptions? options, Func<Task<IAPIResponse>> send) =>
+        SendCoreAsync(method, url, options, send, retryOnServerError: true);
+
+    private static async Task<IAPIResponse> SendCoreAsync(
+        string method,
+        string url,
+        APIRequestContextOptions? options,
+        Func<Task<IAPIResponse>> send,
+        bool retryOnServerError)
     {
+        var maxAttempts = retryOnServerError ? MaxAttempts : 1;
         for (var attempt = 1; ; attempt++)
         {
-            var response = await send();
-            if (response.Status < 500 || attempt == MaxAttempts)
-                return response;
+            var sw = Stopwatch.StartNew();
+            IAPIResponse? response = null;
+            Exception? error = null;
+            try
+            {
+                response = await send();
+                sw.Stop();
+                var willRetry = retryOnServerError && response.Status >= 500 && attempt < maxAttempts;
+                ApiCallLogger.Record(await BuildLogEntryAsync(method, url, options, response, null, sw.Elapsed, attempt, maxAttempts));
+                Console.WriteLine($"[ApiClient] {method} {ApiCallLogger.SanitizeUrl(url)} -> {response.Status} ({sw.Elapsed.TotalMilliseconds:F0} ms, attempt {attempt}/{maxAttempts})");
+                if (!willRetry)
+                    return response;
 
-            Console.Error.WriteLine($"[ApiClient] {method} {url} answered {response.Status}; retrying ({attempt}/{MaxAttempts - 1}).");
-            await Task.Delay(TimeSpan.FromMilliseconds(300 * attempt));
+                Console.Error.WriteLine($"[ApiClient] {method} {ApiCallLogger.SanitizeUrl(url)} answered {response.Status}; retrying ({attempt}/{maxAttempts - 1}).");
+                await Task.Delay(TimeSpan.FromMilliseconds(300 * attempt));
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                error = ex;
+                ApiCallLogger.Record(await BuildLogEntryAsync(method, url, options, null, error, sw.Elapsed, attempt, maxAttempts));
+                Console.WriteLine($"[ApiClient] {method} {ApiCallLogger.SanitizeUrl(url)} -> ERROR ({sw.Elapsed.TotalMilliseconds:F0} ms, attempt {attempt}/{maxAttempts})");
+                throw;
+            }
         }
     }
+
+    private static async Task<string> BuildLogEntryAsync(
+        string method,
+        string url,
+        APIRequestContextOptions? options,
+        IAPIResponse? response,
+        Exception? error,
+        TimeSpan elapsed,
+        int attempt,
+        int maxAttempts)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"[{DateTime.UtcNow:O}] {method} {ApiCallLogger.SanitizeUrl(url)} (attempt {attempt}/{maxAttempts}, {elapsed.TotalMilliseconds:F0} ms)");
+        sb.AppendLine("Request headers:");
+        sb.AppendLine(Indent(ApiCallLogger.FormatHeaders(options?.Headers)));
+        sb.AppendLine("Request body:");
+        sb.AppendLine(Indent(ApiCallLogger.FormatBody(options?.DataString)));
+
+        if (error is not null)
+        {
+            sb.AppendLine("Error:");
+            sb.AppendLine(Indent(error.GetType().Name + ": " + error.Message));
+            return sb.ToString().TrimEnd();
+        }
+
+        if (response is not null)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Response: {response.Status} {response.StatusText}");
+            sb.AppendLine("Response headers:");
+            sb.AppendLine(Indent(ApiCallLogger.FormatHeaders(response.Headers)));
+            sb.AppendLine("Response body:");
+            string body;
+            try
+            {
+                body = await response.TextAsync();
+            }
+            catch (Exception ex)
+            {
+                body = $"<failed to read body: {ex.Message}>";
+            }
+            sb.AppendLine(Indent(ApiCallLogger.FormatBody(body)));
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static string Indent(string value) =>
+        string.Join(Environment.NewLine, value.Split(Environment.NewLine).Select(l => "  " + l));
 
     protected static string Url(string path, IReadOnlyDictionary<string, string?>? query = null)
     {

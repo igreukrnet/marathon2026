@@ -6,7 +6,7 @@ namespace Restaurant_Aqa_Framework.Api;
 public sealed class GuestSessionsApi(IAPIRequestContext api) : ApiClientBase(api)
 {
     public Task<IAPIResponse> CreateGuestSessionAsync(CreateGuestSessionRequest request) =>
-        Api.PostAsync(Url("/guest/sessions"), new APIRequestContextOptions
+        PostAsync(Url("/guest/sessions"), new APIRequestContextOptions
         {
             DataString = Serialize(request),
             Headers = Headers(),
@@ -20,7 +20,7 @@ public sealed class GuestSessionsApi(IAPIRequestContext api) : ApiClientBase(api
 
     public Task<IAPIResponse> AddDishAsync(
         string guestSessionId, AddDishToGuestSessionRequest request, string? sessionToken = null) =>
-        Api.PostAsync(Url($"/guest/sessions/{guestSessionId}/dishes"), new APIRequestContextOptions
+        PostAsync(Url($"/guest/sessions/{guestSessionId}/dishes"), new APIRequestContextOptions
         {
             DataString = Serialize(request),
             Headers = Headers(sessionToken),
@@ -35,7 +35,7 @@ public sealed class GuestSessionsApi(IAPIRequestContext api) : ApiClientBase(api
         });
 
     public Task<IAPIResponse> SubmitGuestCartAsync(string guestSessionId, string? sessionToken = null) =>
-        Api.PostAsync(Url($"/guest/sessions/{guestSessionId}/submit"), new APIRequestContextOptions
+        PostAsync(Url($"/guest/sessions/{guestSessionId}/submit"), new APIRequestContextOptions
         {
             Headers = Headers(sessionToken),
         });

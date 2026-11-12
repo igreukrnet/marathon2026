@@ -1,0 +1,6 @@
+{
+  "$schema": "https://allurereport.org/facets/schemas/allureConfig.schema.json",
+  "allure": {
+    "directory": "allure-results"
+  }
+}

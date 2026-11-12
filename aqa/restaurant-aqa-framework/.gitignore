@@ -11,8 +11,10 @@ obj/
 # Reqnroll-generated code-behind for .feature files (regenerated on every build)
 *.feature.cs
 
-# Everything a run produces: TUnit report/TRX, Reqnroll report, Playwright traces (see Core/ArtifactPaths.cs)
+# Everything a run produces: TUnit report/TRX, Reqnroll report, Playwright traces, Allure (see Core/ArtifactPaths.cs)
 TestResults/
+allure-results/
+allure-report/
 
 # Local configuration and credentials: never committed. Copy .env.example to .env.
 .env

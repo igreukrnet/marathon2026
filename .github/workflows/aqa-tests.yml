@@ -112,14 +112,18 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Restore
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet publish restaurant-aqa-framework.csproj --configuration Release --no-restore --output bin/Release/net10.0/publish
 
       - name: Install Playwright browsers
-        run: pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: pwsh bin/Release/net10.0/publish/playwright.ps1 install --with-deps chromium
 
       - name: Resolve test filter
         id: filter
@@ -157,10 +161,10 @@ jobs:
         continue-on-error: true
         run: |
           if [ -n "${{ steps.filter.outputs.filter }}" ]; then
-            dotnet bin/Release/net10.0/restaurant-aqa-framework.dll --report-trx \
+            dotnet bin/Release/net10.0/publish/restaurant-aqa-framework.dll --report-trx \
               --results-directory TestResults --treenode-filter "${{ steps.filter.outputs.filter }}"
           else
-            dotnet bin/Release/net10.0/restaurant-aqa-framework.dll --report-trx \
+            dotnet bin/Release/net10.0/publish/restaurant-aqa-framework.dll --report-trx \
               --results-directory TestResults
           fi
 
@@ -208,6 +212,33 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: Generate Allure report
+        if: always()
+        run: |
+          if [ -d TestResults/allure-results ] && [ -n "$(ls -A TestResults/allure-results)" ]; then
+            npx --yes allure@3.33.0 generate TestResults/allure-results -o TestResults/allure-report --clean
+          else
+            echo "No Allure results found to generate report."
+          fi
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: aqa/restaurant-aqa-framework/TestResults/allure-results/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: aqa/restaurant-aqa-framework/TestResults/allure-report/
+          if-no-files-found: warn
+          retention-days: 30
+
       # Always runs, whatever the test step did: counts and failed scenarios come from the TRX the
       # run wrote, so the summary stays useful for a red run and says so plainly when the test
       # process died before producing any results.
@@ -247,6 +278,7 @@ jobs:
                   print(f"- {name}")
               print()
           print("Reports, traces and the TRX are attached to this run as artifacts.")
+          print("Allure raw results and generated HTML report (if produced) are attached as `allure-results` / `allure-report` artifacts.")
           PY
 
       - name: Fail the job if tests failed
