@@ -35,6 +35,8 @@ concurrency:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   test:
@@ -223,25 +225,24 @@ jobs:
             chmod +x TestResults/allure-report/open-report.sh || true
           else
             echo "No Allure results found to generate report."
+            mkdir -p TestResults/allure-report
+            echo "<html><body><h1>No Allure report generated for this run</h1></body></html>" > TestResults/allure-report/index.html
           fi
 
-      - name: Deploy Allure report to GitHub Pages
+      - name: Setup Pages
         if: always()
-        shell: bash
-        run: |
-          if [ -d TestResults/allure-report ] && [ -f TestResults/allure-report/index.html ]; then
-            touch TestResults/allure-report/.nojekyll
-            cd TestResults/allure-report
-            git init
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "deploy: update Allure Report for run ${{ github.run_id }}"
-            git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
-            echo "Successfully deployed Allure report to GitHub Pages (gh-pages branch)."
-          else
-            echo "No Allure report found to deploy to GitHub Pages."
-          fi
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: aqa/restaurant-aqa-framework/TestResults/allure-report
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Upload Allure results
         if: always()
