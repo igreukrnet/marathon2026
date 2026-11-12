@@ -112,6 +112,10 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Restore
         run: dotnet restore
 
@@ -210,13 +214,12 @@ jobs:
 
       - name: Generate Allure report
         if: always()
-        uses: simple-elf/allure-report-action@v1.11
-        with:
-          allure_results: aqa/restaurant-aqa-framework/TestResults/allure-results
-          allure_report: aqa/restaurant-aqa-framework/TestResults/allure-report
-          gh_pages: none
-          allure_history: false
-          keep_reports: 20
+        run: |
+          if [ -d TestResults/allure-results ] && [ -n "$(ls -A TestResults/allure-results)" ]; then
+            npx --yes allure@3.33.0 generate TestResults/allure-results -o TestResults/allure-report --clean
+          else
+            echo "No Allure results found to generate report."
+          fi
 
       - name: Upload Allure results
         if: always()

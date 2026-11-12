@@ -61,7 +61,7 @@ Everything a run produces lands in `TestResults/`:
   npx allure generate TestResults/allure-results -o TestResults/allure-report --clean
   npx allure open TestResults/allure-report
   ```
-- **CI (GitHub Actions):** крок `Generate Allure report` на базі `simple-elf/allure-report-action` формує HTML-звіт навіть при падінні тестів (`if: always()`). До прогону прикріплюються артефакти `allure-report` (готовий HTML) та `allure-results` (для інтеграцій/історії).
+- **CI (GitHub Actions):** крок `Generate Allure report` формує HTML-звіт за допомогою `npx allure@3.33.0 generate` навіть при падінні тестів (`if: always()`). До прогону прикріплюються артефакти `allure-report` (готовий HTML) та `allure-results` (для інтеграцій/історії).
 
 ### 2. Report Portal
 - **Локальний запуск:** `docker compose -f docker-compose.reportportal.yml up -d` (доступно на `http://localhost:8080`).
