@@ -89,7 +89,26 @@ public class ScenarioStageHooks(IObjectContainer container, ScenarioContext scen
         try
         {
             if (stage is UiStageContext ui)
+            {
+                try
+                {
+                    var pages = ui.BrowserContext.Pages;
+                    var page = pages.Count > 0 ? pages[^1] : null;
+                    if (page is not null)
+                    {
+                        var title = string.Concat(scenarioContext.ScenarioInfo.Title.Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
+                        var screenshotPath = Path.Combine(ArtifactPaths.Screenshots, $"{title[..Math.Min(title.Length, 60)]}.png");
+                        await page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshotPath, FullPage = true });
+                        outputHelper.AddAttachment(screenshotPath);
+                    }
+                }
+                catch
+                {
+                    // Ignore screenshot capture failure to ensure trace and teardown proceed
+                }
+
                 await HandleTrace(ui.BrowserContext, scenarioContext, outputHelper);
+            }
         }
         finally
         {

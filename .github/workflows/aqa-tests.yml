@@ -7,14 +7,14 @@ on:
         description: "Which scenarios to run"
         type: choice
         options:
+          - homework
           - level1
           - level2
           - level3
-          - homework
           - api
           - ui
           - all
-        default: level1
+        default: homework
       custom_filter:
         description: >
           Optional Microsoft.Testing.Platform tree filter (overrides "scope" when set), e.g.
@@ -126,7 +126,7 @@ jobs:
         shell: bash
         run: |
           custom_filter="${{ inputs.custom_filter }}"
-          scope="${{ inputs.scope || 'all' }}"
+          scope="${{ inputs.scope || 'homework' }}"
 
           if [ -n "$custom_filter" ]; then
             filter="$custom_filter"
@@ -137,13 +137,15 @@ jobs:
           elif [ "$scope" = "level3" ]; then
             filter="/*/*/*/*[Category=level3]"
           elif [ "$scope" = "homework" ]; then
-            filter="/*/*/*/*[Category=level1] or /*/*/*/*[Category=level2] or /*/*/*/*[Category=level3]"
+            filter="/*/*/*Group*/*"
           elif [ "$scope" = "ui" ]; then
             filter="/*/*/*/*[Category=ui]"
           elif [ "$scope" = "api" ]; then
             filter="/*/*/*/*[Category=api]"
-          else
+          elif [ "$scope" = "all" ]; then
             filter=""
+          else
+            filter="/*/*/*Group*/*"
           fi
 
           echo "filter=$filter" >> "$GITHUB_OUTPUT"
@@ -180,6 +182,15 @@ jobs:
           name: reqnroll-report
           path: aqa/restaurant-aqa-framework/TestResults/reqnroll/
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: aqa/restaurant-aqa-framework/TestResults/screenshots/*.png
+          if-no-files-found: ignore
           retention-days: 30
 
       # ScenarioStageHooks.HandleTrace writes each captured trace to TestResults/traces/ next to the

@@ -14,8 +14,15 @@ public sealed class ChooseAnExistingLocation : ITask
         var response = actor.TheLastResponse();
         await response.CaptureAsync(await new LocationsApi(actor.UsingTheApi()).GetLocationsAsync());
 
-        var location = response.Json<List<LocationResponse>>().FirstOrDefault(IsTheRestaurantsOwn)
-            ?? throw new InvalidOperationException("The restaurant has no locations of its own to work with.");
+        var locations = response.Json<List<LocationResponse>>();
+        var location = locations.FirstOrDefault(IsTheRestaurantsOwn)
+            ?? locations.FirstOrDefault(l => !string.IsNullOrWhiteSpace(l.Address));
+
+        if (location is null)
+        {
+            await actor.AttemptsToAsync(new SetUpLocation());
+            location = actor.Recall<LocationResponse>();
+        }
 
         actor.Remember(location);
     }

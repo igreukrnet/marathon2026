@@ -58,10 +58,10 @@
         <div class="hint-or-error">
           @if (lastName?.invalid && (lastName?.touched || lastName?.dirty)) {
             @if (lastName?.errors?.['required']) {
-              <div class="error-message">First name is required.</div>
+              <div class="error-message">Last name is required.</div>
             }
             @if (lastName?.errors?.['maxlength']) {
-              <div class="error-message">First name must be up to 50 characters.</div>
+              <div class="error-message">Last name must be up to 50 characters.</div>
             }
             @if (lastName?.errors?.['pattern']) {
               <div class="error-message">

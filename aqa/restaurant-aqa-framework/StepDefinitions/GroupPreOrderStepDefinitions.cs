@@ -89,9 +89,21 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     [When("the owner refreshes the group pre-order review")]
     public async Task WhenOwnerRefreshesReview()
     {
-        var page = new GroupOrderPage(Actor.LookingAtThePage());
-        await page.RefreshButton.ClickAsync();
-        await Actor.LookingAtThePage().WaitForTimeoutAsync(1000);
+        var page = Actor.LookingAtThePage();
+        var groupOrderPage = new GroupOrderPage(page);
+
+        var responseTask = page.WaitForResponseAsync(
+            resp => resp.Url.Contains("/sessions"),
+            new() { Timeout = 15000 });
+
+        await groupOrderPage.RefreshButton.ClickAsync();
+        try
+        {
+            await responseTask;
+        }
+        catch (TimeoutException) { }
+
+        await page.WaitForTimeoutAsync(500);
     }
 
     [Then("the owner sees participants {string} and {string}")]
@@ -108,8 +120,19 @@ public sealed class GroupPreOrderStepDefinitions(Actor actor) : StepDefinitionBa
     [Then("the owner sees {string} with {int} dishes")]
     public async Task ThenOwnerSeesGuestWithDishes(string guestName, int dishCount)
     {
-        var participants = await Actor.AsksForAsync(new TheGroupParticipants());
-        var guest = participants.FirstOrDefault(p => p.Name.Contains(guestName, StringComparison.OrdinalIgnoreCase));
+        ParticipantSummary? guest = null;
+        for (var i = 0; i < 10; i++)
+        {
+            var participants = await Actor.AsksForAsync(new TheGroupParticipants());
+            guest = participants.FirstOrDefault(p => p.Name.Contains(guestName, StringComparison.OrdinalIgnoreCase));
+            if (guest is not null && guest.ItemsCount == dishCount)
+                break;
+
+            if (Actor.Can<IBrowseTheWeb>())
+                await Actor.LookingAtThePage().WaitForTimeoutAsync(500);
+            else
+                await Task.Delay(500);
+        }
 
         await Assert.That(guest).IsNotNull();
         await Assert.That(guest!.ItemsCount).IsEqualTo(dishCount);

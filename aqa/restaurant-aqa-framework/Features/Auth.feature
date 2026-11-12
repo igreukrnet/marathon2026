@@ -14,7 +14,10 @@ Feature: Signing in
       When the waiter signs in with the correct password
       Then the waiter is signed in
 
-    @ui @smoke
+    # Known defect in the application: the standing waiter account was provisioned with an
+    # 18-character password (WaiterPassword123!), but the storefront login form enforces
+    # maxLength(16), leaving the Sign In button permanently disabled.
+    @ui @smoke @known-defect
     Scenario: A waiter signs in on the storefront
       When the waiter signs in with the correct password
       Then the waiter is signed in

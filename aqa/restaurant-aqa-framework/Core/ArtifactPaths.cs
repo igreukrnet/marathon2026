@@ -19,6 +19,8 @@ public static class ArtifactPaths
 
     public static string Traces => Directory.CreateDirectory(Path.Combine(Root, "traces")).FullName;
 
+    public static string Screenshots => Directory.CreateDirectory(Path.Combine(Root, "screenshots")).FullName;
+
     /// <summary>Removes traces left by earlier runs, so the folder only ever holds the current run's.</summary>
     public static void ClearTraces()
     {
