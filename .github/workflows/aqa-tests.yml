@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test:
@@ -217,8 +217,30 @@ jobs:
         run: |
           if [ -d TestResults/allure-results ] && [ -n "$(ls -A TestResults/allure-results)" ]; then
             npx --yes allure@3.33.0 generate TestResults/allure-results -o TestResults/allure-report --clean
+            # Helper scripts inside artifact zip for easy local opening on double click
+            printf '@echo off\r\nnpx --yes allure@3.33.0 open "%%~dp0"\r\n' > TestResults/allure-report/open-report.cmd
+            printf '#!/bin/bash\nDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\nnpx --yes allure@3.33.0 open "$DIR"\n' > TestResults/allure-report/open-report.sh
+            chmod +x TestResults/allure-report/open-report.sh || true
           else
             echo "No Allure results found to generate report."
+          fi
+
+      - name: Deploy Allure report to GitHub Pages
+        if: always()
+        shell: bash
+        run: |
+          if [ -d TestResults/allure-report ] && [ -f TestResults/allure-report/index.html ]; then
+            touch TestResults/allure-report/.nojekyll
+            cd TestResults/allure-report
+            git init
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "deploy: update Allure Report for run ${{ github.run_id }}"
+            git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
+            echo "Successfully deployed Allure report to GitHub Pages (gh-pages branch)."
+          else
+            echo "No Allure report found to deploy to GitHub Pages."
           fi
 
       - name: Upload Allure results
@@ -277,8 +299,11 @@ jobs:
               for name in failed:
                   print(f"- {name}")
               print()
-          print("Reports, traces and the TRX are attached to this run as artifacts.")
-          print("Allure raw results and generated HTML report (if produced) are attached as `allure-results` / `allure-report` artifacts.")
+
+          print("---\n")
+          print("### 📊 [👉 Нажмите здесь, чтобы открыть Allure Report онлайн](https://igreukrnet.github.io/marathon2026/)\n")
+          print("> Интерактивный отчет с графиками, BDD-шагами, скриншотами UI и логами API опубликован на GitHub Pages.\n")
+          print("Отчет и сырые данные также прикреплены к запуску как артефакты `allure-report` и `allure-results` (в архиве есть `open-report.cmd` для открытия в один клик).")
           PY
 
       - name: Fail the job if tests failed
