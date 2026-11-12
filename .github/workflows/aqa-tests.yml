@@ -157,10 +157,10 @@ jobs:
         continue-on-error: true
         run: |
           if [ -n "${{ steps.filter.outputs.filter }}" ]; then
-            ./bin/Release/net10.0/publish/restaurant-aqa-framework --report-trx \
+            dotnet bin/Release/net10.0/publish/restaurant-aqa-framework.dll --report-trx \
               --results-directory TestResults --treenode-filter "${{ steps.filter.outputs.filter }}"
           else
-            ./bin/Release/net10.0/publish/restaurant-aqa-framework --report-trx \
+            dotnet bin/Release/net10.0/publish/restaurant-aqa-framework.dll --report-trx \
               --results-directory TestResults
           fi
 
