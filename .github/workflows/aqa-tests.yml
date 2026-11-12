@@ -116,10 +116,11 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet publish --configuration Release --no-restore --output bin/Release/net10.0/publish
 
       - name: Install Playwright browsers
-        run: pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: pwsh playwright.ps1 install --with-deps chromium
+        working-directory: aqa/restaurant-aqa-framework/bin/Release/net10.0
 
       - name: Resolve test filter
         id: filter
@@ -155,12 +156,13 @@ jobs:
       - name: Run tests
         id: run_tests
         continue-on-error: true
+        working-directory: aqa/restaurant-aqa-framework/bin/Release/net10.0/publish
         run: |
           if [ -n "${{ steps.filter.outputs.filter }}" ]; then
-            dotnet bin/Release/net10.0/restaurant-aqa-framework.dll --report-trx \
+            ./restaurant-aqa-framework --report-trx \
               --results-directory TestResults --treenode-filter "${{ steps.filter.outputs.filter }}"
           else
-            dotnet bin/Release/net10.0/restaurant-aqa-framework.dll --report-trx \
+            ./restaurant-aqa-framework --report-trx \
               --results-directory TestResults
           fi
 
